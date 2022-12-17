@@ -64,6 +64,7 @@
 | [UI_Effect](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/UI_%20Effect.cs) | タイトル画面並びにインゲーム中のUI演出処理に関する処理を行っている。 | 全記述 |
 
 ※上記に記載のないスクリプトファイルは私自身記述した部分のないスクリプトファイルとなっております。  
+（まだトランジション処理のスクリプトファイルとシェーダーファイル入ってないよーーーー！）  
 
 
 # 使用したデバイス・ツール
