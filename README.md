@@ -84,7 +84,7 @@
 | ▼▼[Resourcesフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Resources) |  |  |
 | ▼[Transitionフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Resources/Transition) |  |  |
 | [TransitionColorShader.shader](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Resources/Transition/TransitionColorShader.shader) | トランジションイメージ画像にこのシェーダーを付けることで、指定した色のトランジション処理を行う。<br>（ゲーム内では使用されていない。） | 全記述 |
-| [TransitionTextureShader.shader](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Resources/Transition/TransitionTextureShader.shader) | トランジションイメージ画像にこのシェーダーを付け、指定のテクスチャーを設定することで、そのテクスチャー画像のトランジション処理を行う。） | 全記述 |
+| [TransitionTextureShader.shader](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Resources/Transition/TransitionTextureShader.shader) | トランジションイメージ画像にこのシェーダーを付け、指定のテクスチャーを設定することで、そのテクスチャー画像のトランジション処理を行う。 | 全記述 |
 
 ※上記に記載のないスクリプトファイルは私自身記述した部分のないスクリプトファイルとなっております。  
   
