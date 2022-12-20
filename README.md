@@ -47,10 +47,10 @@
 ![5びょうごのきみと _タイトル画面](https://user-images.githubusercontent.com/71632844/208284648-4812f8ad-53fb-469f-acc2-a32d9f3ddaf3.gif)  
 ⓵ゲーム開始画面（タイトル・もくじ・あそびかた画面）  
   
-![5びょうごのきみと プレイ映像](https://user-images.githubusercontent.com/71632844/208729523-629e82aa-fb0f-400e-9983-79928e31f552.gif)  
+![5びょうごのきみと _スタート演出](https://user-images.githubusercontent.com/71632844/208729680-1ec93349-40c4-488f-a90d-3d6fc37d7143.gif)  
 ⓶スタート演出  
   
-![5びょうごのきみと _プレイ映像](https://user-images.githubusercontent.com/71632844/208284756-5aa3c301-1759-4932-b718-7ec4ff969c65.gif)  
+![5びょうごのきみと プレイ映像](https://user-images.githubusercontent.com/71632844/208729523-629e82aa-fb0f-400e-9983-79928e31f552.gif)  
 ⓷プレイ映像  
   
 ![5びょうごのきみと ゴール演出](https://user-images.githubusercontent.com/71632844/208284774-dda936b9-606c-43e7-8cb8-7341b386f3f9.gif)  
