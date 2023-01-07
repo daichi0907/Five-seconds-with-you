@@ -6,12 +6,17 @@ public class PushObject : MonoBehaviour
 {
     GameObject parent, child, player;
     PlayerBehaviour playerController;
-    public float power = 3000;
-    public bool X;
+
+    [SerializeField] float power = 3000;
+    [SerializeField] bool X;
+    [SerializeField] LayerMask layerMask;
+
     float calcX = 0, calcZ = 0;
-    bool  canHold;
+    bool  canHold, oldCanHold;
+
     Rigidbody parentRb;
     Camera mainCamera;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -21,20 +26,43 @@ public class PushObject : MonoBehaviour
         mainCamera = Camera.main;
         player = GameObject.Find("Player");
         playerController = player.GetComponent<PlayerBehaviour>();
+
         if (X)
-        {
             calcX = 1;
-        }
         else
-        {
             calcZ = 1;
-        }
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(canHold)
+        RaycastHit hit;
+        Ray ray;
+        for (int i = 0; i < 3; i++)
+        {
+            //X軸とZ軸が逆になるので調整
+            float calcRayX = transform.localScale.x * 2 / 3 * (i - 1) * calcZ;
+            float calcRayZ = transform.localScale.x * 2 / 3 * (i - 1) * calcX;
+            Vector3 calcRayOrigin = new Vector3(calcRayX, - 0.6f, calcRayZ);
+
+            ray = new Ray(transform.parent.position +　calcRayOrigin, -transform.forward);
+
+            //オブジェクトがつかみたい面の近くにある時はつかめないように
+            if (Physics.Raycast(ray , 1.3f, layerMask))
+            {
+                canHold = false;
+            } 
+            Debug.DrawRay(ray.origin, ray.direction * 1.3f);
+        }
+        ray = new Ray(transform.position + new Vector3(transform.forward.x / 7f, -transform.localScale.y * 3 / 4, transform.forward.z / 7f)  , -transform.up);
+        if (!Physics.Raycast(ray, 0.5f, layerMask))
+        {
+            canHold = false;
+        }
+        Debug.DrawRay(ray.origin, ray.direction * 0.5f);
+        //つかめる
+        if (canHold)
         {
             var cameraForward = Vector3.Scale(mainCamera.transform.forward, new Vector3(1, 0, 1));
             var moveVec =  cameraForward * Input.GetAxis("Vertical") + mainCamera.transform.right * Input.GetAxis("Horizontal");
@@ -44,6 +72,7 @@ public class PushObject : MonoBehaviour
                 playGimmick.ActionTypeP = ActionType.PushOrPull;
             }
 
+            //ボタンを押した最初だけプレイヤーの向きや位置を調整
             if (Input.GetButtonDown("Action"))
             {
                 playerController.OFF_CharacterController();
@@ -56,6 +85,7 @@ public class PushObject : MonoBehaviour
 
             }
 
+            //押す処理
             if (Input.GetButton("Action"))
             {
                 playerController.OFF_PlayerRotate();
@@ -68,6 +98,13 @@ public class PushObject : MonoBehaviour
                 child.SetActive(false);
             }
         }
+        else if(oldCanHold)
+        {
+            playerController.ON_PlayerRotate();
+            child.SetActive(false);
+        }
+
+        oldCanHold = canHold;
     }
     private void OnTriggerStay(Collider other)
     {
@@ -88,6 +125,5 @@ public class PushObject : MonoBehaviour
             playerController.ON_PlayerRotate();
             child.SetActive(false);
         }
-
     }
 }

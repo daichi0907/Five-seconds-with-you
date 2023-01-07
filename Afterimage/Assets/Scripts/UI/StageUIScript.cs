@@ -2,34 +2,57 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI.Extensions;
 
 public class StageUIScript : UI_Effect
 {
+    #region serialize field
     [SerializeField] private GameData gameData;
+    [Space(3)]
 
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private Button pausePlayButton;
+    [Space(3)]
 
     [SerializeField] private GameObject howToPlayPanel;
     [SerializeField] private GameObject[] howToPlayPagePanel;
     [SerializeField] private Button cancelButton;
     [SerializeField] float fadeSec = 2f;
-    FadeState fadeState = FadeState.None;
-    bool howToPlayFlag = false;
-    bool nowEffecting = false;
+    [Space(3)]
+
+    [SerializeField] private GameObject retryPanel;
+    [SerializeField] private Button retryNoButton;
+    [Space(3)]
 
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private float time = 500f;
-    float timeLimit;
+    [Space(3)]
 
     [SerializeField] private GameObject clearPanel;
     [SerializeField] private Button nextStageButton;
     [SerializeField] private float clearStayTime = 2.0f;
+    [Space(3)]
+
+    [SerializeField] private GameObject brackFadePanel;
+    #endregion
+
+
+    #region private member
+    FadeState fadeState = FadeState.None;
+    GameObject selectButton;
+    GameObject selectedButton; // マウスなどが原因でコントローラー操作が出来なくなるのを防ぐために保管しておく用
+    bool howToPlayFlag = false;
+    bool retryFlag = false;
+    bool nowEffecting = false;
+
+    float timeLimit;
+
     Scene nowStage;
 
+    EventSystem eventSystem;
 
     /// <summary> インゲーム時のデフォルトのパネル（松島） </summary>
     private GameObject _DefaultPanel;
@@ -44,16 +67,28 @@ public class StageUIScript : UI_Effect
 
     /// <summary> Stageへの遷移時のページめくり演出（松島） </summary>
     //private bool _IsStartFirstCutIn = false;
-    private GameObject FirstCutInPanel;
+    private GameObject _FirstCutInPanel;
     private BookUI _FirstCutInUI;
     //private float _FirstCutInTime;
 
-    public float ClearStayTime { get { return clearStayTime; } }
+    /// <summary> リトライ時のページめくり演出（松島） </summary>RetryPanel
+    private UI_RetryPanel _RetryPanel;
+    #endregion
 
+
+    #region propaty
+    public float ClearStayTime { get { return clearStayTime; } }
+    #endregion
+
+
+    #region Unity function
     // Start is called before the first frame update
     void Start()
     {
         gameData.EditorStart();
+        
+        // 効果音を一括ロード
+        SoundSet();
 
         pausePanel.GetComponent<PauseUIAnimation>().PauseUISetUp();
 
@@ -61,9 +96,12 @@ public class StageUIScript : UI_Effect
 
         nowStage = SceneManager.GetActiveScene();
 
+        eventSystem = GameObject.Find("EventSystem").GetComponent<EventSystem>();
+        selectButton = pausePlayButton.gameObject;
+
         // 松島
-        FirstCutInPanel = transform.Find("FirstCutInPanel").gameObject;
-        _FirstCutInUI = FirstCutInPanel.GetComponent<BookUI>();
+        _FirstCutInPanel = transform.Find("FirstCutInPanel").gameObject;
+        _FirstCutInUI = _FirstCutInPanel.GetComponent<BookUI>();
         _DefaultPanel = transform.Find("DefaultPanel").gameObject;
         _DefaultPanel.SetActive(false);
         _ClearBookUI = clearPanel.GetComponent<BookUI>();
@@ -75,6 +113,15 @@ public class StageUIScript : UI_Effect
         _WarpEffect = _WarpEffectObj.GetComponent<UI_WarpEffect>();
 
         _DirectingScript = GameObject.Find("DirectingObj").GetComponent<DirectingScript>();
+
+        _RetryPanel = transform.Find("RetryPanel").gameObject.GetComponent<UI_RetryPanel>();
+        _RetryPanel.gameObject.SetActive(false);
+
+        // ステージ09の場合
+        if(nowStage.name == "Stage09")
+        {
+            _FirstCutInPanel.SetActive(false);
+        }
     }
 
     // Update is called once per frame
@@ -85,11 +132,20 @@ public class StageUIScript : UI_Effect
 
         FadeEffect();
 
+        if (gameData.InGameState == InGame.Pause || gameData.InGameState == InGame.GoalCompletion)
+        {
+            // 今選択しているものを First Selected に随時上書きしつつ
+            // 選択状態が解除されてしまった時に再度選択状態を取得できるようにする
+            ReadCurrentSelectedButton();
+            ReferenceSelectedButton();
+        }
+
         if (howToPlayFlag)
         {
             cancelButton.Select();
         }
-        else
+        
+        if(!howToPlayFlag && !retryFlag)
         {
             // ゲームクリア条件やゲーム中の演出処理を追加した際に
             // ポーズ画面に行くかどうかの条件文変更の可能性大
@@ -102,6 +158,44 @@ public class StageUIScript : UI_Effect
         // ひとつ前のインゲームステートとして保存
         _PrevInGameState = _CurrentInGameState;
     }
+    #endregion
+
+
+    #region Coroutine
+    /// <summary>
+    /// リトライ用コルーチン
+    /// </summary>
+    private IEnumerator RetryCoroutine()
+    {
+        yield return new WaitForSeconds(_ClearBookUI.TurnTime);
+
+        // 現在のシーンを再読み込み
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private IEnumerator MainMenuTransitionCorutine()
+    {
+        float time = 0f;
+
+        eventSystem.enabled = false;
+
+        while(time <= fadeSec)
+        {
+            FadeInUI(ref brackFadePanel, fadeSec, true);
+            if (_CurrentInGameState == InGame.Pause)
+            {
+                Sound.VolumeDownBGM(Time.unscaledDeltaTime, 0.3f);
+            }
+            yield return new WaitForEndOfFrame();
+            time += Time.unscaledDeltaTime;
+        }
+
+        Time.timeScale = 1f;
+        gameData.MeinMenuTransition();
+        SceneManager.LoadScene("TitleScene");
+    }
+    #endregion
+
 
     #region private function
     /// <summary>
@@ -121,7 +215,7 @@ public class StageUIScript : UI_Effect
                 break;
             case InGame.ChangeStartView:
                 {
-                    FirstCutInPanel.SetActive(false);
+                    _FirstCutInPanel.SetActive(false);
                 }
                 break;
             case InGame.EntryPlayer:
@@ -144,6 +238,8 @@ public class StageUIScript : UI_Effect
                 break;
             case InGame.InGoal:
                 {
+                    Sound.PlaySE("Warp", 0.5f);
+
                     ////演出追加のため、この時点でクリアパネルをオンにする（松島）
                     //clearPanel.SetActive(true);
                     //_WarpEffectObj.SetActive(true);
@@ -153,6 +249,11 @@ public class StageUIScript : UI_Effect
                 break;
             case InGame.GoalCompletion:
                 {
+                    Sound.StopBGM();
+                    if (nowStage.name != "Stage08")
+                    {
+                        Sound.PlaySE("StageClear", 1f);
+                    }
                 }
                 break;
         }
@@ -170,6 +271,14 @@ public class StageUIScript : UI_Effect
         {
             case InGame.CutIn:
                 {
+                    // ステージ09の場合
+                    if (nowStage.name == "Stage09")
+                    {
+                        gameData.ChangeStartViewTransition();
+                        return;
+                    }
+
+                    // それ以外のシーン
                     CutInEffectUpdate();
                 }
                 break;
@@ -200,12 +309,15 @@ public class StageUIScript : UI_Effect
                 break;
             case InGame.EntryGoal:
                 {
+                    Sound.VolumeDownBGM(Time.deltaTime, 0.6f);
                 }
                 break;
             case InGame.InGoal:
                 {
+                    Sound.VolumeDownBGM(Time.deltaTime, 0.6f);
+
                     // カメラが上を向いていたら
-                    if(_DirectingScript.IsStartWarpEffect && !_WarpEffectObj.activeSelf)
+                    if (_DirectingScript.IsStartWarpEffect && !_WarpEffectObj.activeSelf)
                     {
                         //演出追加のため、この時点でクリアパネルをオンにする（松島）
                         clearPanel.SetActive(true);
@@ -217,8 +329,24 @@ public class StageUIScript : UI_Effect
                 break;
             case InGame.GoalCompletion:
                 {
-                    // ページをめくる演出を行う（松島）
-                    _ClearBookUI.TurnPageUpdate();
+                    if (nowStage.name == "Stage08")
+                    {   // ファイナルマンガへ！
+                        FadeInUI(ref brackFadePanel, fadeSec * 2);
+
+                        if (brackFadePanel.GetComponent<Image>().color.a == 1f)
+                        {
+                            //gameData.MeinMenuTransition();
+                            //SceneManager.LoadScene("TitleScene");
+
+                            gameData.ChangeCutInTransition();
+                            SceneManager.LoadScene("Stage09");
+                        }
+                    }
+                    else
+                    {
+                        // ページをめくる演出を行う（松島）
+                        _ClearBookUI.TurnPageUpdate();
+                    }
 
                     // マウスを押した際に、進行不能になることを防ぐ。
                     if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
@@ -237,6 +365,43 @@ public class StageUIScript : UI_Effect
         return (_PrevInGameState != _CurrentInGameState);
     }
 
+    void SoundSet()
+    {
+        Sound.LoadSE("PencilSelect", "ButtonSelect");
+        Sound.LoadSE("PencilPush", "ButtonPush");
+        Sound.LoadSE("StageClear", "StageClear");
+        Sound.LoadSE("Warp", "warp");
+    }
+
+    /// <summary>
+    /// 万が一選択状態のボタンが無くなってしまったときにスティック操作で
+    /// 選択中のボタンを再度選択状態できるよう保管する関数
+    /// また、随時選択状態が何かを取得し、InputModule操作が切り替わっても正常に操作できるよう保存
+    /// </summary>
+    void ReadCurrentSelectedButton()
+    {
+        if (eventSystem.currentSelectedGameObject != null)
+        {
+            selectedButton = eventSystem.currentSelectedGameObject.gameObject;
+            eventSystem.firstSelectedGameObject = selectedButton;
+        }
+    }
+
+    /// <summary>
+    /// 選択状態のボタンがないときにスティック操作で再度選択状態にする関数
+    /// </summary>
+    void ReferenceSelectedButton()
+    {
+        if (eventSystem.GetComponent<EventSystem>().currentSelectedGameObject == null)
+        {
+            if (Input.GetAxis(eventSystem.GetComponent<StandaloneInputModule>().horizontalAxis) != 0 ||
+                Input.GetAxis(eventSystem.GetComponent<StandaloneInputModule>().verticalAxis) != 0)
+            {
+                selectedButton.GetComponent<Button>().Select();
+            }
+        }
+    }
+
     /// <summary>
     /// カットインエフェクトを更新する
     /// </summary>
@@ -246,7 +411,7 @@ public class StageUIScript : UI_Effect
         if (_FirstCutInUI.IsFinishEffect)
         {
             gameData.ChangeStartViewTransition();
-            FirstCutInPanel.SetActive(false);
+            _FirstCutInPanel.SetActive(false);
             return;
         }
     }
@@ -259,8 +424,11 @@ public class StageUIScript : UI_Effect
     {
         yield return new WaitForSeconds(clearStayTime);
         _ClearBookUI.DisplayBGImage();
-        // ページをめくる演出を開始させる（松島）
-        _ClearBookUI.GoToNextPage();
+        if(nowStage.name != "Stage08")
+        {
+            // ページをめくる演出を開始させる（松島）
+            _ClearBookUI.GoToNextPage();
+        }
         StageClear();
     }
 
@@ -269,6 +437,7 @@ public class StageUIScript : UI_Effect
     {
         gameData.GoalCompletionTransition();
         clearPanel.SetActive(true);
+        selectButton = nextStageButton.gameObject;
         nextStageButton.Select();
 
         if (nowStage.name == "SampleScene")
@@ -286,6 +455,37 @@ public class StageUIScript : UI_Effect
         }
     }
 
+
+    bool ComicCheck()
+    {
+        if (nowStage.name == gameData.stageScene[1] && !gameData.showStartStory[1])
+        {
+            SceneManager.LoadScene("Comic02");
+            return true;
+        }
+        else if(nowStage.name == gameData.stageScene[3] && !gameData.showStartStory[2])
+        {
+            SceneManager.LoadScene("Comic03");
+            return true;
+        }
+        else if (nowStage.name == gameData.stageScene[5] && !gameData.showStartStory[3])
+        {
+            SceneManager.LoadScene("Comic04");
+            return true;
+        }
+        else if (nowStage.name == gameData.stageScene[7] && !gameData.showStartStory[4])
+        {
+            //SceneManager.LoadScene("");
+            //return true;
+
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// フェードエフェクト処理
     /// </summary>
@@ -297,18 +497,45 @@ public class StageUIScript : UI_Effect
 
             if (howToPlayFlag)
             {
-                PanelToFade(ref pausePanel, ref howToPlayPanel, ref fadeState, pausePanel, fadeSec, true);
+                PanelToFade(ref pausePanel, ref howToPlayPanel, ref fadeState, pausePanel, fadeSec, true, true);
             }
             else
             {
-                PanelToFade(ref howToPlayPanel, ref pausePanel, ref fadeState, pausePanel, fadeSec, false);
+                PanelToFade(ref howToPlayPanel, ref pausePanel, ref fadeState, pausePanel, fadeSec, false, true);
             }
 
 
             if (!howToPlayPanel.activeInHierarchy)
             {
+                selectButton = pausePlayButton.gameObject;
                 pausePlayButton.Select();
                 HowToPlayEffectReset(ref howToPlayPanel);
+            }
+        }
+        else if (fadeState == FadeState.Reset)
+        {
+            nowEffecting = true;
+
+            if (retryFlag)
+            {
+                PanelToFade(ref pausePanel, ref retryPanel, ref fadeState, pausePanel, fadeSec, true, true);
+
+                if (retryPanel.GetComponent<Image>().color.a >= 1f)
+                {
+                    selectButton = retryNoButton.gameObject;
+                    retryNoButton.Select();
+                }
+            }
+            else
+            {
+                PanelToFade(ref retryPanel, ref pausePanel, ref fadeState, pausePanel, fadeSec, false, true);
+            }
+
+
+            if (!retryPanel.activeInHierarchy)
+            {
+                selectButton = pausePlayButton.gameObject;
+                pausePlayButton.Select();
             }
         }
         else
@@ -316,18 +543,8 @@ public class StageUIScript : UI_Effect
             nowEffecting = false;
         }
     }
-
-    /// <summary>
-    /// リトライ用コルーチン
-    /// </summary>
-    private IEnumerator RetryCoroutine()
-    {
-        yield return new WaitForSeconds(_ClearBookUI.TurnTime);
-
-        // 現在のシーンを再読み込み
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
     #endregion
+
 
     #region Button function
     // ポーズボタンを押したときの処理
@@ -361,12 +578,13 @@ public class StageUIScript : UI_Effect
     // ---------- ポーズ画面中のボタン処理 ---------- //
     public void ClickPlayButton()
     {
+        Sound.PlaySE("PencilPush", 1f);
         pausePanel.GetComponent<PauseUIAnimation>().CutOutPause();
     }
 
     public void ClickHowToPlayButton()
     {
-        //howToPlayFade = true;
+        Sound.PlaySE("PencilPush", 1f);
         fadeState = FadeState.HowToPlay;
         howToPlayFlag = true;
         cancelButton.Select();
@@ -407,6 +625,8 @@ public class StageUIScript : UI_Effect
     // ---------- クリア画面中のボタン処理 ---------- //
     public void ClickNextStageButton()
     {
+        Sound.PlaySE("PencilPush", 1f);
+
         // ページめくり演出が終わっていなければ、以下は実行しない（松島）
         if (gameData.InGameState == InGame.GoalCompletion && !_ClearBookUI.IsFinishEffect)
         {
@@ -418,6 +638,12 @@ public class StageUIScript : UI_Effect
             Time.timeScale = 1f;
             gameData.ChangeCutInTransition();
             SceneManager.LoadScene(nowStage.name);
+            return;
+        }
+
+        // マンガのムービーに行くか
+        if (ComicCheck())
+        {
             return;
         }
 
@@ -433,6 +659,20 @@ public class StageUIScript : UI_Effect
         }
     }
 
+    // ---------- リトライ確認画面のボタン処理 ---------- //
+    public void RetryNoButton()
+    {
+        retryFlag = false;
+        fadeState = FadeState.Reset;
+        Sound.PlaySE("PencilPush", 1f);
+    }
+
+    public void RetryYesButton()
+    {
+        RetryFunction();
+    }
+
+
     // ---------- ポーズ・クリア画面共通のボタン処理 ---------- //
     public void ClickStageSelectButton()
     {
@@ -444,6 +684,7 @@ public class StageUIScript : UI_Effect
 
         Time.timeScale = 1f;
         gameData.StageSelectTransition();
+        Sound.BGMAndSEResets();
         SceneManager.LoadScene("TitleScene");
     }
 
@@ -459,9 +700,12 @@ public class StageUIScript : UI_Effect
             return;
         }
 
-        Time.timeScale = 1f;
-        gameData.MeinMenuTransition();
-        SceneManager.LoadScene("TitleScene");
+        Sound.PlaySE("PencilPush", 1f);
+        StartCoroutine(MainMenuTransitionCorutine());
+
+        //Time.timeScale = 1f;
+        //gameData.MeinMenuTransition();
+        //SceneManager.LoadScene("TitleScene");
     }
 
     /// <summary>
@@ -470,6 +714,18 @@ public class StageUIScript : UI_Effect
     /// </summary>
     public void ClickRetryButton()
     {
+        if (gameData.InGameState == InGame.Pause)
+        {
+            retryFlag = true;
+            fadeState = FadeState.Reset;
+            Sound.PlaySE("PencilPush", 1f);
+
+            //Time.timeScale = 1f;
+            //gameData.ChangeCutInTransition();
+            //SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            return;
+        }
+
         // ページめくり演出が終わっていなければ、以下は実行しない
         if (gameData.InGameState == InGame.GoalCompletion && !_ClearBookUI.IsFinishEffect)
         {
@@ -477,15 +733,33 @@ public class StageUIScript : UI_Effect
             return;
         }
 
-        Time.timeScale = 1f;
-        gameData.ChangeCutInTransition();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-
+        _RetryPanel.gameObject.SetActive(true);
+        clearPanel.SetActive(false);
+        Sound.BGMAndSEResets();
 
         //_ClearBookUI.GoToNextPage();
 
         //// リトライコルーチンを起動
         //StartCoroutine(RetryCoroutine());
+    }
+
+    public void RetryFunction()
+    {
+        Time.timeScale = 1f;
+        gameData.ChangeCutInTransition();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void Select()
+    {
+        if (selectButton != null && eventSystem.GetComponent<EventSystem>().currentSelectedGameObject == selectButton)
+        {
+            selectButton = null;
+        }
+        else
+        {
+            Sound.PlaySE("PencilSelect", 0.75f);
+        }
     }
     #endregion
 }

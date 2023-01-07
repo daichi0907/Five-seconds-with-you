@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class StageController : MonoBehaviour
 {
@@ -11,10 +12,13 @@ public class StageController : MonoBehaviour
 
     /// <summary> 残像の高度制限 </summary>
     [SerializeField] private GameObject _HighestPoint;
+
+    public GameData gameData;
     #endregion
 
     #region field
     private RideSencor _RideSencor;
+    private string nowSceneName;
     #endregion
 
     #region property
@@ -35,6 +39,34 @@ public class StageController : MonoBehaviour
         _RideSencor = _Afterimage.transform.GetChild(1).gameObject.GetComponent<RideSencor>();
 
         _HighestPosition = _HighestPoint.GetComponent<Transform>().position.y;
+
+        // 渡邊 追記
+        nowSceneName = SceneManager.GetActiveScene().name;
+        if (nowSceneName == gameData.stageScene[0] || nowSceneName == gameData.stageScene[1])
+        {
+            Sound.LoadBGM("StageBGM", "StageBGM1_2");
+            Sound.PlayBGM("StageBGM", 0.03f);
+        }
+        else if (nowSceneName == gameData.stageScene[2] || nowSceneName == gameData.stageScene[3])
+        {
+            Sound.LoadBGM("StageBGM", "StageBGM3_4");
+            Sound.PlayBGM("StageBGM", 0.03f);
+        }
+        else if (nowSceneName == gameData.stageScene[4] || nowSceneName == gameData.stageScene[5])
+        {
+            Sound.LoadBGM("StageBGM", "StageBGM5_6");
+            Sound.PlayBGM("StageBGM", 0.03f);
+        }
+        else if (nowSceneName == gameData.stageScene[6] || nowSceneName == gameData.stageScene[7])
+        {
+            Sound.LoadBGM("StageBGM", "StageBGM7_8");
+            Sound.PlayBGM("StageBGM", 0.03f);
+        }
+        else
+        {
+            Sound.LoadBGM("StageBGM", "StageBGM1_2");
+            Debug.LogWarning("BGMがセットできてないよ！！");
+        }
     }
     #endregion
 }

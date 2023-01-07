@@ -88,13 +88,19 @@ public class AfterimageBehaviour : MonoBehaviour
     // 変更するメッシュをマテリアルごとに分ける
     List<Renderer>[] _M_Renderers = new List<Renderer>[(int)MeshType.Guard];
     MaterialState _MaterialState = MaterialState.Nomal;   // マテリアルの状態
+    private GameObject _AfterimageBody;
 
     /// <summary> ゲーム開始最初の５秒を固定のスタート地点にいさせるための変数群 </summary>
     private Vector3 startPos;
     private Quaternion startRote;
     private float recordDeltaTime = 0.0f;
 
+    private GameObject _FloatEffectOjb = null;
+
     public GameData gameData;
+
+    /// <summary> ゲーム開始時エフェクトを作動させないためのフラグ </summary>
+    bool isFirstPos;
     #endregion
 
     #region property
@@ -110,12 +116,15 @@ public class AfterimageBehaviour : MonoBehaviour
         _PlayGimmick = PlayGimmickType.None;
         _CharacterController = GetComponent<CharacterController>();
 
+        isFirstPos = true;
+
         // 重なり判定用のプレイヤーの位置取得
         _PlayerTransform = _StageManager._PlayerTransform;
 
         // 重なり時の透過用に、メッシュごとのレンダラーを取得
         RenderersSetUp();
         SetMaterials(_OriginMaterials);
+        _AfterimageBody = transform.GetChild(0).gameObject;
     }
 
     // Update is called once per frame
@@ -139,9 +148,12 @@ public class AfterimageBehaviour : MonoBehaviour
         // 残像のステートを基にアニメーションを更新
         AnimatorUpdate();
 
-        // 条件秒以上プレイヤーと重なっていれば、残像を透けさせる。
-        CheckOverlap();
-        ChangeAlphas();
+        if(_PlayGimmick != PlayGimmickType.SunnySpot)
+        {
+            // 条件秒以上プレイヤーと重なっていれば、残像を透けさせる。
+            CheckOverlap();
+            ChangeAlphas();
+        }
         //ToTransparent(isOverlap);
 
         //DebugLog();
@@ -167,6 +179,7 @@ public class AfterimageBehaviour : MonoBehaviour
         if (other.gameObject.tag == "SunnySpot")
         {
             _PlayGimmick = PlayGimmickType.SunnySpot;
+            _AfterimageBody.SetActive(false);
         }
     }
 
@@ -182,6 +195,7 @@ public class AfterimageBehaviour : MonoBehaviour
         if (other.gameObject.tag == "SunnySpot")
         {
             _PlayGimmick = PlayGimmickType.None;
+            _AfterimageBody.SetActive(true);
         }
     }
     #endregion
@@ -396,6 +410,8 @@ public class AfterimageBehaviour : MonoBehaviour
         {
             yield return new WaitForSeconds(_RecordDuration);
 
+            Vector3 prevVec = transform.position;
+
             if(gameData.InGameState == InGame.ChangeStartView || gameData.InGameState == InGame.EntryPlayer)
             {
                 this.gameObject.transform.GetChild(0).transform.GetChild(0).gameObject.SetActive(false) ;
@@ -424,6 +440,8 @@ public class AfterimageBehaviour : MonoBehaviour
             }
             i++;
 
+            // 一回の更新で条件距離以上移動していれば、エフェクトを発生させる
+            TryGanarateTeleportationEffect(transform.position, prevVec);
 
             //　保存データ数を超えたら次の保存データを再生
             if (i >= _MaxDataNum)
@@ -486,6 +504,30 @@ public class AfterimageBehaviour : MonoBehaviour
     }
 
     /// <summary>
+    /// 一回の更新で条件距離以上移動していれば、エフェクトを発生させる
+    /// </summary>
+    /// <param name="currentPos">現在の座標</param>
+    /// <param name="prevPos">更新前の座標</param>
+    private void TryGanarateTeleportationEffect(Vector3 currentPos, Vector3 prevPos)
+    {
+        float distance = (currentPos - prevPos).magnitude;
+
+        // 移動距離が1以下であれば以下の処理は行わない
+        if (distance < 0.75f) return;
+
+        // 0.0f (current)  ⇔  1.0f (prev)
+        Vector3 genaratePos = Vector3.Lerp(currentPos, prevPos, 0.75f) + transform.up;
+
+        //最初だけエフェクトを再生したくない
+        if (!isFirstPos)
+        {
+            GameObject teleportationEffectObj = EffectManager.Instance.Play(EffectManager.EffectID.Teleportation, genaratePos);
+            Destroy(teleportationEffectObj, 1.0f);
+        }
+        isFirstPos = false;
+    }
+
+    /// <summary>
     /// 残像のアニメーションステートを管理
     /// </summary>
     private void AnimatorUpdate()
@@ -508,21 +550,40 @@ public class AfterimageBehaviour : MonoBehaviour
         switch (_CurrentState)
         {
             case PlayerState.Idle:
-                if (_PrevState == PlayerState.Ride) _Animator.SetTrigger("ToMove");
-                else if (_PrevState == PlayerState.Action_PushOrPll) _Animator.SetTrigger("ToIdle");
+                {
+                    if (_PrevState == PlayerState.Ride) _Animator.SetTrigger("ToMove");
+                    else if (_PrevState == PlayerState.Action_PushOrPull) _Animator.SetTrigger("ToIdle");
+                }
                 break;
             case PlayerState.Action:
-                _Animator.SetTrigger("ToAction");
+                {
+                    _Animator.SetTrigger("ToAction");
+                }
                 break;
-            case PlayerState.Action_PushOrPll:
-                if (_PrevState == PlayerState.Move || _PrevState == PlayerState.Idle) _Animator.SetTrigger("ToAction");
+            case PlayerState.Action_PushOrPull:
+                {
+                    if (_PrevState == PlayerState.Move || _PrevState == PlayerState.Idle) _Animator.SetTrigger("ToAction");
+                }
                 break;
             case PlayerState.Ride:
-                if (_PrevState == PlayerState.Idle || _PrevState == PlayerState.Move) _Animator.SetTrigger("ToRide");
+                {
+                    if (_PrevState == PlayerState.Idle || _PrevState == PlayerState.Move) _Animator.SetTrigger("ToRide");
+
+                    // 浮遊エフェクトの生成・座標調整
+                    _FloatEffectOjb = EffectManager.Instance.Play(EffectManager.EffectID.Float, transform.position);
+                }
                 break;
             case PlayerState.Move:
-                if (_PrevState == PlayerState.Ride) { _Animator.SetTrigger("ToMove"); _Animator.ResetTrigger("ToRide"); }
-                else if (_PrevState == PlayerState.Action_PushOrPll) _Animator.SetTrigger("ToIdle");
+                {
+                    if (_PrevState == PlayerState.Ride) 
+                    { 
+                        _Animator.SetTrigger("ToMove"); _Animator.ResetTrigger("ToRide");
+                    }
+                    else if (_PrevState == PlayerState.Action_PushOrPull) 
+                    { 
+                        _Animator.SetTrigger("ToIdle"); 
+                    }
+                }
                 break;
             default:
                 break;

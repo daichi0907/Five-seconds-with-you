@@ -25,7 +25,7 @@ public class MovableObject : MonoBehaviour
 
             // プレイヤーの入力を基に、このオブジェクトを動かす
             Vector3 vector = Vector3.zero;
-            if (playGimmick.Get_PlayerState() == PlayerState.Action_PushOrPll)
+            if (playGimmick.Get_PlayerState() == PlayerState.Action_PushOrPull)
             {
                 if (playGimmick != null) vector = playGimmick.Get_WorldVelocity();
                 _MyParent.transform.Translate(vector * Time.deltaTime);

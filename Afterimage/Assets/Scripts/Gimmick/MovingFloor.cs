@@ -35,6 +35,8 @@ public class MovingFloor : MonoBehaviour
 
         oldIsPushing[0] = Buttons[0].isPushing;
         oldIsPushing[1] = Buttons[1].isPushing;
+
+        Sound.LoadSE("MoveFence","MoveFence");
     }
 
     // Update is called once per frame
@@ -46,6 +48,8 @@ public class MovingFloor : MonoBehaviour
                 isUpperPos = false;
             else
                 isUpperPos = true;
+
+            Sound.PlaySE("MoveFence", 1f, 3);
         }
        
         if (x)

@@ -43,9 +43,9 @@ public class DoorScript : MonoBehaviour
 
     void Open()
     {
-        if (door[0].transform.position.x < doorMovePos[0].x)
+        if ((doorMovePos[0] - door[0].transform.position).magnitude > 0.5f)
             door[0].transform.Translate(moveVec[0] * speed * Time.deltaTime);
-        if (door[1].transform.position.x > doorMovePos[1].x)
+        if ((doorMovePos[1] - door[1].transform.position).magnitude > 0.5f)
             door[1].transform.Translate(moveVec[1] * speed * Time.deltaTime);
     }
 }

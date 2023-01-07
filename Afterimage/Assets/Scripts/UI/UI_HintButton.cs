@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UI_HintButton : MonoBehaviour
+public class UI_HintButton : MonoBehaviour, IButtonComponent
 {
     /// <summary> ソースを書くときのレンプレート </summary>
 
@@ -32,6 +32,11 @@ public class UI_HintButton : MonoBehaviour
 
     // 画像を動的に変えたいボタンの宣言
     private Image _BtnImage;
+
+    /// <summary> ヒントギミック </summary>
+    HintGimmick _HintGimmick;
+    HintGimmick.StateEnum _CurrentHintState;
+    HintGimmick.StateEnum _PrevHintState;
     #endregion
 
     #region property
@@ -50,14 +55,25 @@ public class UI_HintButton : MonoBehaviour
         _BtnImage = this.GetComponent<Image>();
         _BtnImage.sprite = _Images[(int)ShowHint.Close];
         _PrevCanShowHint = false;
+
+        // ヒントギミックの取得
+        var gimmicks = GameObject.Find("Gimmicks").gameObject;
+        var hintGimmickSet = gimmicks.transform.Find("HintGimmick").gameObject;
+        _HintGimmick = hintGimmickSet.transform.Find("HintArea").gameObject.GetComponent<HintGimmick>();
+        _CurrentHintState = _HintGimmick.State;
     }
 
     // Update is called once per frame
     void Update()
     {
-        UpdateImage();
+        _CurrentHintState = _HintGimmick.State;
 
-        UpdateButtonState();
+        //UpdateImage();
+
+        //UpdateButtonState();
+        UpdateState();
+
+        _PrevHintState = _CurrentHintState;
     }
     #endregion
 
@@ -71,16 +87,16 @@ public class UI_HintButton : MonoBehaviour
     /// </summary>
     private void UpdateImage()
     {
-        if (!_PrevCanShowHint && HintGimmick._CanShowHint)
+        if (!_PrevCanShowHint && _HintGimmick.CanShowHint)
         {
             _BtnImage.sprite = _Images[(int)ShowHint.Open];
         }
-        else if (_PrevCanShowHint && !HintGimmick._CanShowHint)
+        else if (_PrevCanShowHint && !_HintGimmick.CanShowHint)
         {
             _BtnImage.sprite = _Images[(int)ShowHint.Close];
         }
 
-        _PrevCanShowHint = HintGimmick._CanShowHint;
+        _PrevCanShowHint = _HintGimmick.CanShowHint;
     }
 
     /// <summary>
@@ -97,7 +113,7 @@ public class UI_HintButton : MonoBehaviour
             _CanUseButton = true;
         }
 
-        switch (HintGimmick._CanShowHint)
+        switch (_HintGimmick.CanShowHint)
         {
             case true:
                 {
@@ -125,12 +141,106 @@ public class UI_HintButton : MonoBehaviour
     }
 
     /// <summary>
+    /// 状態の変更
+    /// </summary>
+    private void ChangeState()
+    {
+        //Debug.Log(_CurrentHintState);
+
+        switch (_CurrentHintState)
+        {
+            case HintGimmick.StateEnum.Locked:
+                {
+                }
+                break;
+            case HintGimmick.StateEnum.Disabled:
+                {
+                    _Button.animator.ResetTrigger("Disabled");
+                    _Button.animator.SetTrigger("Normal");
+                }
+                break;
+            case HintGimmick.StateEnum.Useable:
+                {
+                }
+                break;
+            case HintGimmick.StateEnum.Finish:
+                {
+                    _Button.animator.SetTrigger("Pressed");
+                     _CanUseButton = false;
+                    Invoke(nameof(ToNormal_ButtonState), 0.15f);
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 状態毎の毎フレーム呼ばれる処理
+    /// </summary>
+    private void UpdateState()
+    {
+        if (IsEntryThisState()) { ChangeState(); return; }
+        
+        switch (_CurrentHintState)
+        {
+            case HintGimmick.StateEnum.Locked:
+                {
+                    if (!_AnimStateInfo.IsName("Disabled"))
+                    {
+                        _Button.animator.ResetTrigger("Normal");
+                        _Button.animator.SetTrigger("Disabled");
+                    }
+                }
+                break;
+            case HintGimmick.StateEnum.Disabled:
+                {
+                    UpdateImage();
+                }
+                break;
+            case HintGimmick.StateEnum.Useable:
+                {
+                    UpdateImage();
+                }
+                break;
+            case HintGimmick.StateEnum.Finish:
+                {
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// ちょうどそのステートに入った所かどうか
+    /// </summary>
+    /// <returns></returns>
+    private bool IsEntryThisState()
+    {
+        return (_PrevHintState != _CurrentHintState);
+    }
+
+    /// <summary>
     /// Normalステートに変更
     /// </summary>
     private void ToNormal_ButtonState()
     {
-        _Button.animator.SetTrigger("Normal");
+        _Button.animator.SetTrigger("Disabled");   // "Normal"
         _Button.animator.ResetTrigger("Pressed");
+    }
+    #endregion
+
+    #region IPlayGimmickComponent
+    /// <summary>
+    /// ギミック側から、プレイヤーのメンバ関数を呼び出すためのインターフェイス
+    /// </summary>
+    /// <summary> ボタンを押したとき </summary>
+    public void GetButtonDown()
+    {
+
+    }
+
+    /// <summary> ボタンを話したとき </summary>
+    public void GetButtonUp()
+    {
+
     }
     #endregion
 }

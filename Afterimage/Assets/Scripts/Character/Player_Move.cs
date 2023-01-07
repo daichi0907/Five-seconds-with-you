@@ -10,6 +10,24 @@ public partial class PlayerBehaviour
     private Vector3 _WorldVec = Vector3.zero;
     #endregion
 
+    #region public function
+    /// <summary>
+    /// プレイヤーの回転をONにする
+    /// </summary>
+    public void ON_PlayerRotate()
+    {
+        canRotate = true;
+    }
+
+    /// <summary>
+    /// プレイヤーの回転をOFFにする
+    /// </summary>
+    public void OFF_PlayerRotate()
+    {
+        canRotate = false;
+    }
+    #endregion
+
     #region private function
     /// <summary>
     /// プレイヤーの入力を移動用のベクトルに変換する
@@ -17,8 +35,15 @@ public partial class PlayerBehaviour
     /// <returns> 変換後のベクトル（最大：1） </returns>
     private Vector3 GetInput_Move()
     {
-        float xDelta = Input.GetAxis("L_Horizontal");
-        float zDelta = Input.GetAxis("L_Vertical");
+        float xDelta = 0.0f;
+        float zDelta = 0.0f;
+
+        // コントローラからの入力を受け付ける場合
+        if (_IsInputable)
+        {
+            xDelta = Input.GetAxis("L_Horizontal");
+            zDelta = Input.GetAxis("L_Vertical");
+        }
 
         Vector3 moveDelta = new Vector3(xDelta, 0, zDelta);
 
@@ -39,21 +64,6 @@ public partial class PlayerBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, look, _RotationSpeed * Time.deltaTime);
     }
 
-    /// <summary>
-    /// プレイヤーの回転をONにする
-    /// </summary>
-    public void ON_PlayerRotate()
-    {
-        canRotate = true;
-    }
-
-    /// <summary>
-    /// プレイヤーの回転をOFFにする
-    /// </summary>
-    public void OFF_PlayerRotate()
-    {
-        canRotate = false;
-    }
     /// <summary>
     /// プレイヤーを移動回転させる
     /// </summary>
@@ -85,8 +95,12 @@ public partial class PlayerBehaviour
 
         if (!_CharaCon.isGrounded) moveVec.y += Physics.gravity.y * Time.deltaTime;
 
-        _Animator.SetFloat("DeltaTime", _DeltaTime);
-        _Animator.SetFloat("MoveBlend", _MoveBlend);
+        // コントローラからの入力を受け付ける場合
+        if (_IsInputable)
+        {
+            _Animator.SetFloat("DeltaTime", _DeltaTime);
+            _Animator.SetFloat("MoveBlend", _MoveBlend);
+        }
 
         //回転をオンオフできるようにしました
         if (_Velocity.normalized.magnitude > 0.0f && canRotate)

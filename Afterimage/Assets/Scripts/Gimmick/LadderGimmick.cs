@@ -8,6 +8,7 @@ public class LadderGimmick : MonoBehaviour
 {
     enum Direction { N = 0, E = 1, S = 2, W = 3 };
     public GameObject forLadder;
+    GameObject player;
     GameObject mainCamera;
     IPlayGimmick playGimmick;
     PlayerBehaviour playerController;
@@ -20,7 +21,7 @@ public class LadderGimmick : MonoBehaviour
     string axisName;
     float code,angle, directionX = 0, directionZ = 0, time;
     bool climb = false, timeCount = false;
-    Direction cameraDirection, oldCameraDirection, ladderDirection;
+    Direction cameraDirection,  ladderDirection;
     KeyCode up, down;
     
     public enum LadderType : int
@@ -37,7 +38,8 @@ public class LadderGimmick : MonoBehaviour
         time = 0;
         mainCamera = GameObject.Find("Main Camera");
 
-        playerController = GameObject.Find("Player").GetComponent<PlayerBehaviour>();
+        player = GameObject.Find("Player");
+        playerController = player.GetComponent<PlayerBehaviour>();
 
         if(X)
         {
@@ -127,7 +129,6 @@ public class LadderGimmick : MonoBehaviour
                 down = KeyCode.D;
                 break;
         }
-        oldCameraDirection = cameraDirection;
 
         if (timeCount)
             time += Time.deltaTime;
@@ -159,6 +160,7 @@ public class LadderGimmick : MonoBehaviour
                 // 取り出せていれば、キャラクターコントローラーをオフにする
                 playGimmick.OFF_CharacterController();
                 playerController.OFF_PlayerRotate();
+
                 forLadder.transform.position = other.transform.position - Vector3.up * 1 / 8;
                 forLadder.SetActive(true);
                 other.gameObject.transform.position = new Vector3(transform.position.x, other.gameObject.transform.position.y, transform.position.z) + directionX * Vector3.right * 0.51f + directionZ * Vector3.forward * 0.51f;
@@ -169,6 +171,7 @@ public class LadderGimmick : MonoBehaviour
         {
             if (_ladderType == LadderType.Start)
             {
+                player.transform.LookAt(new Vector3(transform.position.x, player.transform.position.y, transform.position.z));
                 if (Input.GetKey(up) || code * Input.GetAxis(axisName) >= 0.2)
                 {
                     playGimmick.Get_Transform().Translate(Vector3.up * speed * Time.deltaTime);

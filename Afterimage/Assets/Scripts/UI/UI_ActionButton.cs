@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UI_ActionButton : MonoBehaviour
+public class UI_ActionButton : MonoBehaviour, IButtonComponent
 {
     /// <summary> ソースを書くときのレンプレート </summary>
 
@@ -83,36 +83,11 @@ public class UI_ActionButton : MonoBehaviour
     {
         _AnimStateInfo = _Button.animator.GetCurrentAnimatorStateInfo(0);
 
-        switch(_Player.ActionType)
+        // PushOrPullステート以外なら
+        if (_Player.ActionType != ActionType.PushOrPull)
         {
-            case ActionType.Default:
-            case ActionType.Button:
-            case ActionType.Torch:
-                {
-                    if(!_IsPushed && _AnimStateInfo.IsName("Pressed")) _Button.animator.SetTrigger("Normal");
-
-                    // アクションボタンが押されたら
-                    if (Input.GetButtonDown("Action"))
-                    {
-                        // 既に押されている状態であればリターン
-                        if (_AnimStateInfo.IsName("Pressed")) return;
-                        // プレイヤーがアクションボタンを利用できないステートであればリターン
-                        if (!(_Player.State == PlayerState.Idle || _Player.State == PlayerState.Move ||  _Player.State == PlayerState.Action)) return;
-
-                        _IsPushed = true;
-                        _Button.animator.ResetTrigger("Normal");
-                        _Button.animator.SetTrigger("Pressed");
-                        Invoke(nameof(ToNormal_ButtonState), 0.15f);
-                    }
-                }
-                break;
-            case ActionType.PushOrPull:
-                {
-                    // 長押し対応
-                    if (Input.GetButtonDown("Action")) { _Button.animator.SetTrigger("Pressed"); _IsPushed = true; }
-                    if (Input.GetButtonUp("Action"))   { _Button.animator.SetTrigger("Normal"); _IsPushed = false; }
-                }
-                break;
+            // 押されていない、且つ、アニメーションが"Pressed"なら、アニメーションを"Normal"に戻す
+            if (!_IsPushed && _AnimStateInfo.IsName("Pressed")) _Button.animator.SetTrigger("Normal");
         }
     }
 
@@ -124,6 +99,52 @@ public class UI_ActionButton : MonoBehaviour
         _IsPushed = false;
         _Button.animator.SetTrigger("Normal");
         _Button.animator.ResetTrigger("Pressed");
+    }
+    #endregion
+
+    #region IPlayGimmickComponent
+    /// <summary>
+    /// ギミック側から、プレイヤーのメンバ関数を呼び出すためのインターフェイス
+    /// </summary>
+    /// 
+    /// <summary>
+    /// ボタンを押したとき
+    /// </summary>
+    public void GetButtonDown()
+    {
+        switch (_Player.ActionType)
+        {
+            case ActionType.Default:
+            case ActionType.Button:
+            case ActionType.Torch:
+                {
+                    // 既に押されている状態であればリターン
+                    if (_AnimStateInfo.IsName("Pressed")) return;
+                    // プレイヤーがアクションボタンを利用できないステートであればリターン
+                    if (!(_Player.State == PlayerState.Idle || _Player.State == PlayerState.Move ||  _Player.State == PlayerState.Action)) return;
+
+                    _IsPushed = true;
+                    _Button.animator.ResetTrigger("Normal");
+                    _Button.animator.SetTrigger("Pressed");
+                    Invoke(nameof(ToNormal_ButtonState), 0.15f);
+                }
+                break;
+            case ActionType.PushOrPull:
+                {
+                    _Button.animator.SetTrigger("Pressed"); _IsPushed = true;
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// ボタンを話したとき
+    /// </summary>
+    public void GetButtonUp()
+    {
+        // PushOrPullステートでなければ処理は行わない
+        if (_Player.ActionType != ActionType.PushOrPull) return;
+        if (Input.GetButtonUp("Action")) { _Button.animator.SetTrigger("Normal"); _IsPushed = false; }
     }
     #endregion
 }

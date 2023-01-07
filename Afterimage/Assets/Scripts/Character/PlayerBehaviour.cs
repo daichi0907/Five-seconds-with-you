@@ -33,6 +33,7 @@ public partial class PlayerBehaviour : MonoBehaviour, IPlayGimmick
     private Vector3 _Velocity;   // アナログスティックを3次元ベクトルに変更
     private float _MoveBlend;
     private float _DeltaTime = 0f;
+    private bool _IsInputable = true;   // コントローラからの入力を受け付けるかどうか
 
     /// <summary> プレイヤーの状態の変化を感知するための変数群 </summary>
     private PlayerState _CurrentState;
@@ -48,6 +49,11 @@ public partial class PlayerBehaviour : MonoBehaviour, IPlayGimmick
 
     /// <summary> プレイヤーの表示・非表示を行うための変数 </summary>
     private GameObject _BodyMeshs;
+
+    /// <summary> 使用するアクションボタン </summary>
+    IButtonComponent _ActionButton;
+    /// <summary> ヒントギミック </summary>
+    HintGimmick _HintGimmick;
 
     private bool isGoingOut = false;
     private bool canRotate = true;
@@ -69,6 +75,15 @@ public partial class PlayerBehaviour : MonoBehaviour, IPlayGimmick
 
         _BodyMeshs = transform.GetChild(0).gameObject.transform.GetChild(0).gameObject;
         HiddenPlayerBody();   // ゲーム開始前にプレイヤーを非表示にする。
+
+        // アクションボタンの取得
+        var canvas = GameObject.Find("StageCanvas").gameObject;
+        var defaultPanel = canvas.transform.Find("DefaultPanel").gameObject;
+        _ActionButton = defaultPanel.transform.Find("ActionButton").gameObject.GetComponent<IButtonComponent>();
+        // ヒントギミックの取得
+        var gimmicks = GameObject.Find("Gimmicks").gameObject;
+        var hintGimmickSet = gimmicks.transform.Find("HintGimmick").gameObject;
+        _HintGimmick = hintGimmickSet.transform.Find("HintArea").gameObject.GetComponent<HintGimmick>();
 
         // デバッグ用なので消しても問題なし
         _ActionType = ActionType.Default;
@@ -103,7 +118,7 @@ public partial class PlayerBehaviour : MonoBehaviour, IPlayGimmick
         _StateMachine.Update();
 
         // 実験用：Backspaceで死亡状態に強制的に遷移
-        if (Input.GetKeyDown(KeyCode.Backspace)) _StateMachine.Dispatch((int)Event.Dead);
+        // if (Input.GetKeyDown(KeyCode.Backspace)) _StateMachine.Dispatch((int)Event.Dead);
 
         _PrevState = _CurrentState;
     }
@@ -133,7 +148,7 @@ public partial class PlayerBehaviour : MonoBehaviour, IPlayGimmick
     /// <summary>
     /// デバッグ用
     /// </summary>
-    private void DebugFunction()
+    protected void DebugFunction()
     {
         // 体の表示・非表示の切り替え
         if (Input.GetKeyDown(KeyCode.T))
@@ -280,22 +295,14 @@ public partial class PlayerBehaviour : MonoBehaviour, IPlayGimmick
     {
         return _CurrentState;
     }
+
+    /// <summary>
+    /// コントローラからの入力を受け付けるかどうか
+    /// </summary>
+    /// <param name="enabled"></param>
+    public void InputSetActive(bool enabled)
+    {
+        _IsInputable = enabled;
+    }
     #endregion
 }
-
-
-#region IPlayGimmick
-/// <summary>
-/// ギミック側から、プレイヤーのメンバ関数を呼び出すためのインターフェイス
-/// </summary>
-public interface IPlayGimmick
-{
-    Vector3 Get_InputVelocity();
-    Vector3 Get_WorldVelocity();
-    Transform Get_Transform();
-    void OFF_CharacterController();
-    void ON_CharacterController();
-    public ActionType ActionTypeP { get; set; }
-    PlayerState Get_PlayerState();
-}
-#endregion

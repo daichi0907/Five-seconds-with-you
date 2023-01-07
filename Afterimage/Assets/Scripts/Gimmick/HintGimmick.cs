@@ -7,6 +7,16 @@ using UnityEngine.SceneManagement;
 public class HintGimmick : MonoBehaviour
 {
     /// <summary> ソースを書くときのレンプレート </summary>
+    /// <summary>
+    /// ヒントギミックの状態
+    /// </summary>
+    public enum StateEnum
+    {
+        Locked,
+        Disabled,
+        Useable,
+        Finish,
+    }
 
     #region define
     private enum HintViewEdge : int
@@ -17,7 +27,6 @@ public class HintGimmick : MonoBehaviour
     #endregion
 
     #region serialize field
-    [SerializeField] private Transform _SpawnPoint;
     [SerializeField] private GameObject _HintObject;
 
     [SerializeField] private CinemachineVirtualCamera _HintVcamera;
@@ -26,19 +35,30 @@ public class HintGimmick : MonoBehaviour
 
     [Header("ヒント画角の引き具合を調整")]
     [SerializeField, Range(0, 10)] private float _EdgeDistance = 5.0f;
+
+    [Header("ヒント機能開放までの待ち時間")]
+    [SerializeField, Range(0, 120)] private float _WaitTime = 60.0f;
     #endregion
 
     #region field
+    private PlayerBehaviour _Player;
     private Transform _PlayerTransform;
 
     private GameObject _HintBody;
 
-    public static bool _CanShowHint;
-    public static bool _IsAliveHint;
+    private bool _CanShowHint;
+    private bool _IsAliveHint;
+
+    private StateEnum _CurrentHintState;
+    private StateEnum _PrevHintState;
+    private float _Time;
     #endregion
 
     #region property
+    public bool CanShowHint { get { return _CanShowHint; } }
+    public bool IsAliveHint { get { return _IsAliveHint; } }
 
+    public StateEnum State { get { return _CurrentHintState; } }
     #endregion
 
     #region Unity function
@@ -50,18 +70,20 @@ public class HintGimmick : MonoBehaviour
         _HintBody = _HintObject.transform.GetChild(0).gameObject;
         _HintBody.SetActive(false);
 
-        _PlayerTransform = GameObject.Find("Player").GetComponent<Transform>();
+        GameObject playerObj = GameObject.Find("Player").gameObject;
+        _Player = playerObj.GetComponent<PlayerBehaviour>();
+        _PlayerTransform = playerObj.GetComponent<Transform>();
+
+        _CurrentHintState = StateEnum.Locked;
+        _Time = 0.0f;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetButtonDown("Hint"))
-        {
-            GenerateHintObj();
-        }
+        UpdateState();
 
-        UpdateHintViewEdge();
+        _PrevHintState = _CurrentHintState;
     }
 
     private void OnTriggerStay(Collider other)
@@ -87,6 +109,80 @@ public class HintGimmick : MonoBehaviour
 
     #region private function
     /// <summary>
+    /// 状態の変更
+    /// </summary>
+    private void ChangeState(StateEnum stateEnum)
+    {
+        _CurrentHintState = stateEnum;
+        Debug.Log(_CurrentHintState);
+        
+        switch (_CurrentHintState)
+        {
+            case StateEnum.Locked:
+                {
+                }
+                break;
+            case StateEnum.Disabled:
+                {
+                }
+                break;
+            case StateEnum.Useable:
+                {
+                }
+                break;
+            case StateEnum.Finish:
+                {
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 状態毎の毎フレーム呼ばれる処理
+    /// </summary>
+    private void UpdateState()
+    {
+        switch (_CurrentHintState)
+        {
+            case StateEnum.Locked:
+                {
+                    _Time += Time.deltaTime;
+                    if (_Time > _WaitTime) ChangeState(StateEnum.Disabled);
+                }
+                break;
+            case StateEnum.Disabled:
+                {
+                    if(_CanShowHint) ChangeState(StateEnum.Useable);
+                }
+                break;
+            case StateEnum.Useable:
+                {
+                    if (!_CanShowHint) { ChangeState(StateEnum.Disabled); return; }
+
+                    // プレイヤーがIdle・Move状態以外であれば行わない
+                    if(_Player.State != PlayerState.Idle
+                        && _Player.State != PlayerState.Move)
+                    {
+                        return;
+                    }
+
+                    // ヒントを生成
+                    if (Input.GetButtonDown("Hint")) 
+                    {
+                        UpdateHintViewEdge();
+                        GenerateHintObj(); 
+                        //ChangeState(StateEnum.Finish); 
+                    }
+                }
+                break;
+            case StateEnum.Finish:
+                {
+                }
+                break;
+        }
+    }
+
+    /// <summary>
     /// ヒント用オブジェクトを表示する
     /// </summary>
     private void GenerateHintObj()
@@ -95,7 +191,6 @@ public class HintGimmick : MonoBehaviour
         if (_IsAliveHint) return;
 
         _HintBody.SetActive(true);
-        _HintObject.transform.position = _SpawnPoint.transform.position;
         _IsAliveHint = true;
         _HintVcamera.Priority += 10;
 

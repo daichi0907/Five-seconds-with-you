@@ -13,6 +13,8 @@ namespace UnityEngine.UI.Extensions
         {
             ClearEffect,
             CutInEffect,
+            RetryEffect,
+            StageSelect,
         }    
         #endregion
 
@@ -114,18 +116,43 @@ namespace UnityEngine.UI.Extensions
             get 
             {
                 bool isFinishEffect = false;
-                if(_Mode == ModeEnum.ClearEffect)
+                //if(_Mode == ModeEnum.ClearEffect)
+                //{
+                //    isFinishEffect = _IsFinishTurnPaper;
+                //}
+                //else if(_Mode == ModeEnum.CutInEffect)
+                //{
+                //    isFinishEffect = _IsFinishFadeOut;
+                //}
+                //else if()
+                //else
+                //{
+                //    Debug.Log(_Mode);
+                //    Debug.Log("不正な値が入力されています。");
+                //}
+                switch (_Mode)
                 {
-                    isFinishEffect = _IsFinishTurnPaper;
-                }
-                else if(_Mode == ModeEnum.CutInEffect)
-                {
-                    isFinishEffect = _IsFinishFadeOut;
-                }
-                else
-                {
-                    Debug.Log(_Mode);
-                    Debug.Log("不正な値が入力されています。");
+                    case ModeEnum.ClearEffect:
+                        {
+                            isFinishEffect = _IsFinishTurnPaper;
+                        }
+                        break;
+                    case ModeEnum.CutInEffect:
+                        {
+                            isFinishEffect = _IsFinishFadeOut;
+                        }
+                        break;
+                    case ModeEnum.RetryEffect:
+                        {
+                            isFinishEffect = _IsFinishTurnPaper;
+                        }
+                        break;
+                    default:
+                        {
+                            Debug.Log(_Mode);
+                            Debug.Log("不正な値が入力されています。");
+                        }
+                        break;
                 }
                 return isFinishEffect; 
             } 
@@ -144,35 +171,26 @@ namespace UnityEngine.UI.Extensions
             SetUpComponent();
 
             _InputPageNumber = 0;
+
+            Sound.LoadSE("TurnPage", "TurnPage");
         }
 
         void Update()
         {
-            DebugKeyDown();
+            // DebugKeyDown();
 
-            if(_Mode == ModeEnum.CutInEffect)
-            {
-                if (!_IsStartFirstCutIn)
-                {
-                    _CutInWaitTime += (0.5f * Time.deltaTime);
-                    if(_CutInWaitTime > 0.5f)
-                    {
-                        GoToNextPage();
-                        _IsStartFirstCutIn = true;
-                    }
-                    return;
-                }
-                TurnPageUpdate();
-                if(_IsFinishTurnPaper) FadeOutPlainPage();
-            }
-            else if(_Mode == ModeEnum.ClearEffect)
-            {
-                FadeInPlainPage();
-            }
+            BookUpdate();
         }
         #endregion
 
         #region public function
+        public void ResetParameter()
+        {
+            //_CurrentPage = 0;
+            _CurrentPosition = 0.0f;
+            //_CurrentTime = -1.0f;
+        }    
+
         /// <summary>
         /// 無地の紙を徐々に出現させる
         /// </summary>
@@ -235,9 +253,12 @@ namespace UnityEngine.UI.Extensions
         public void GoToNextPage()
         {
             if (_InputPageNumber >= _MaxPage) return;
+            Debug.Log(_InputPageNumber + "  ->  "+ (_InputPageNumber + 1));
 
             _InputPageNumber++;
             CurrentPage = _InputPageNumber;
+
+            Sound.PlaySE("TurnPage", 1f);
         }
 
         /// <summary>
@@ -246,9 +267,12 @@ namespace UnityEngine.UI.Extensions
         public void BackToPrevPage()
         {
             if (_InputPageNumber <= 0) return;
+            Debug.Log(_InputPageNumber + "  ->  "+ (_InputPageNumber - 1));
 
             _InputPageNumber--;
             CurrentPage = _InputPageNumber;
+
+            Sound.PlaySE("TurnPage", 1f);
         }
 
         public void ToUseableButton()
@@ -291,32 +315,92 @@ namespace UnityEngine.UI.Extensions
         /// </summary>
         private void SetUpComponent()
         {
-            if (_Mode == ModeEnum.ClearEffect)
+            switch (_Mode)
             {
-                _PaperT = transform.Find("RawImage/PlainPageR/PlainPageImage").gameObject;
-                _ImagePaperT = _PaperT.GetComponent<Image>();
+                case ModeEnum.ClearEffect:
+                    {
+                        _PaperT = transform.Find("RawImage/PlainPageR/PlainPageImage").gameObject;
+                        _ImagePaperT = _PaperT.GetComponent<Image>();
 
-                _SelectGameObject = transform.Find("RawImage/ClearPageR/ClearPanel/NextStageButton").gameObject;
-                var color = _ImagePaperT.color;
-                color.a = 0.0f;
-                _ImagePaperT.color = color;
+                        _SelectGameObject = transform.Find("RawImage/ClearPageR/ClearPanel/NextStageButton").gameObject;
+                        var color = _ImagePaperT.color;
+                        color.a = 0.0f;
+                        _ImagePaperT.color = color;
 
-                _MaxPage = (transform.GetChild(0).gameObject.transform.childCount / 2) - 1;
+                        _MaxPage = (transform.GetChild(0).gameObject.transform.childCount / 2) - 1;
+                    }
+                    break;
+                case ModeEnum.CutInEffect:
+                    {
+                        _PaperT = transform.Find("RawImage/FadeOutPageR/FadeOutPanel/ClearPageImage").gameObject;
+                        _ImagePaperT = _PaperT.GetComponent<Image>();
+                        var color = _ImagePaperT.color;
+                        color.a = 0.5f;
+                        _ImagePaperT.color = color;
+
+                        _MaxPage = (transform.GetChild(0).gameObject.transform.childCount / 2) - 1;
+                        //Debug.Log(_Mode+" MaxPage : "+ _MaxPage);
+                    }
+                    break;
+                case ModeEnum.RetryEffect:
+                    {
+                        _MaxPage = (transform.GetChild(0).gameObject.transform.childCount / 2) - 1;
+                    }
+                    break;
+                case ModeEnum.StageSelect:
+                    {
+                        _MaxPage = (transform.GetChild(0).gameObject.transform.childCount / 2) - 1;
+                    }
+                    break;
+                default:
+                    {
+                        Debug.Log("不正な値が入力されています。");
+                    }
+                    break;
             }
-            else if (_Mode == ModeEnum.CutInEffect)
-            {
-                _PaperT = transform.Find("RawImage/FadeOutPageR/FadeOutPanel/ClearPageImage").gameObject;
-                _ImagePaperT = _PaperT.GetComponent<Image>();
-                var color = _ImagePaperT.color;
-                color.a = 0.5f;
-                _ImagePaperT.color = color;
+        }
 
-                _MaxPage = (transform.GetChild(0).gameObject.transform.childCount / 2) - 1;
-                //Debug.Log(_Mode+" MaxPage : "+ _MaxPage);
-            }
-            else
+        /// <summary>
+        /// BookUI更新用関数
+        /// </summary>
+        private void BookUpdate()
+        {
+            switch (_Mode)
             {
-                Debug.Log("不正な値が入力されています。");
+                case ModeEnum.CutInEffect:
+                    {
+                        if (!_IsStartFirstCutIn)
+                        {
+                            _CutInWaitTime += (0.5f * Time.deltaTime);
+                            if (_CutInWaitTime > 0.5f)
+                            {
+                                GoToNextPage();
+                                _IsStartFirstCutIn = true;
+                            }
+                            return;
+                        }
+                        TurnPageUpdate();
+                        if (_IsFinishTurnPaper) FadeOutPlainPage();
+                    }
+                    break;
+                case ModeEnum.ClearEffect:
+                    {
+                        FadeInPlainPage();
+                    }
+                    break;
+                case ModeEnum.RetryEffect:
+                    {
+                    }
+                    break;
+                case ModeEnum.StageSelect:
+                    {
+                        TurnPageUpdate();
+                    }
+                    break;
+                default:
+                    {
+                    }
+                    break;
             }
         }
 

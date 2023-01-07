@@ -6,6 +6,9 @@ public class ButtonScript : MonoBehaviour
 {
     public float pushingtime = 1f;
     public bool isPushing;
+
+    bool action;
+    bool playSound;
     bool isTimeCounting;
     float time;
 
@@ -16,16 +19,21 @@ public class ButtonScript : MonoBehaviour
         time = 0;
         isPushing = false;
         isTimeCounting = false;
+        playSound = false;
+        action = false;
         buttonSwitch = transform.GetChild(0).gameObject;
         pushedButtonSwitch = transform.GetChild(1).gameObject;
+
+        //スイッチを押す音
+        Sound.LoadSE("Switch", "Switch");
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (isPushing)
+        if (action)
         {
-            PushButton();
+            isTimeCounting = true;
         }
         else
         {
@@ -35,10 +43,19 @@ public class ButtonScript : MonoBehaviour
         if (isTimeCounting)
             time += Time.deltaTime;
 
-        if (time >= pushingtime)
+        if (time >= 0.03f && !playSound)
+        {
+            playSound = true;
+            Sound.PlaySE("Switch", 2);
+            PushButton();
+        }
+        else if (time >= pushingtime)
         {
             isTimeCounting = false;
             isPushing = false;
+            playSound = false;
+            action = false;
+            time = 0;
         }
 
     }
@@ -53,21 +70,16 @@ public class ButtonScript : MonoBehaviour
             //if (playGimmick != null) playGimmick.Set_ActionType(ActionType.Torch);   // デバッグ用消してよし
             if (playerState == PlayerState.Action)
             {
-                isPushing = true;
+                action = true;
                 time = 0;
             }
-            //if (Input.GetButtonDown("Action"))
-            //{
-            //    isPushing = true;
-            //    time = 0;
-            //}
         }
 
         if (other.tag == "Afterimage")
         {
             if (other.GetComponent<AfterimageBehaviour>().AfterimageState == PlayerState.Action)
             {
-                isPushing = true;
+                action = true;
                 time = 0;
             }
         }
@@ -83,7 +95,8 @@ public class ButtonScript : MonoBehaviour
     }
 
     void PushButton()
-    {
+    {            
+        isPushing = true;
         pushedButtonSwitch.SetActive(true);
         buttonSwitch.SetActive(false);
         isTimeCounting = true;

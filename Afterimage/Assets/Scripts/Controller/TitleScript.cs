@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI.Extensions;
+using System;
 
 public class TitleScript : UI_Effect
 {
@@ -14,6 +16,7 @@ public class TitleScript : UI_Effect
     [SerializeField] [Tooltip("メインメニューのUIをまとめてる親オブジェクト")] private GameObject mainMenuUIs;
     [SerializeField] [Tooltip("「ボタンを押してください」の点滅させるImage")] private Image pressAnyButton;
     [SerializeField] [Tooltip("つづきからボタン")] private Button continueButton;
+    [SerializeField] [Tooltip("シーン開始時のフェードインに欠ける時間")] private float startFadeSec = 3.0f;
     [SerializeField] [Tooltip("切り替えにかける時間")] private float fadeSec = 1.0f;
     [SerializeField] [Tooltip("切り替えにかける時間")] private float flashingRepetTime = 2.0f;
 
@@ -44,6 +47,7 @@ public class TitleScript : UI_Effect
 
     [Space(3)]
     [Header("その他")]
+    [SerializeField] [Tooltip("イベントシステム")] private GameObject blackFadePanel;
     [SerializeField] [Tooltip("イベントシステム")] private EventSystem eventSystem;
     #endregion
 
@@ -59,12 +63,16 @@ public class TitleScript : UI_Effect
 
     GameObject nowActiveScreen;
     Button selectButton;
-    FadeState fadeState = FadeState.None;
+    FadeState fadeState = FadeState.Brack;
+    float goTime; // マンガシーンに遷移するまでの経過時間
     bool nowEffecting = false;
     bool resetScreenFlag = false; // true: ResetScreen表示　false: ResetScreen非表示
     bool goNextScene = false;
+    bool goShowStartStory = false; // マンガシーンに遷移するか
     bool stayScene = false; // デバッグ用、はじめからでタイトルシーンを再読み込みするかどうかを示すフラグ
     bool goSampleSceen = false; // デバッグ用、ステージ選択でサンプルシーンに行けるようにする。
+
+    BookUI _BookUI;
     #endregion
 
 
@@ -79,6 +87,10 @@ public class TitleScript : UI_Effect
         StageDataStorage(); // ステージセレクト画面のデータをクラスに格納
         
         ActiveScreenCheck();// ポーズ画面・クリア画面からステージセレクトへ遷移した時のUI処理
+
+        SoundSet();
+
+        _BookUI = stageSelectScreens.GetComponent<BookUI>();
     }
 
     // Update is called once per frame
@@ -91,7 +103,14 @@ public class TitleScript : UI_Effect
         {
             PressAnyKey();
         }
-        
+
+        // マンガシーンにフェードしながら遷移
+        if (goShowStartStory)
+        {
+            GoShowStartStory();
+            return;
+        }
+
         // シーン遷移時ボタン処理を受け付けないようにする
         if (goNextScene)
         {
@@ -102,7 +121,7 @@ public class TitleScript : UI_Effect
         // フェードエフェクト使用するか判定
         FadeSelect();
 
-        if (gameData.OutGameState != OutGame.Title)
+        if (gameData.OutGameState != OutGame.Title && !nowEffecting)
         {
             // 今選択しているものを First Selected に随時上書きしつつ
             // 選択状態が解除されてしまった時に再度選択状態を取得できるようにする
@@ -171,7 +190,7 @@ public class TitleScript : UI_Effect
     {
         yield return new WaitForSeconds(2.0f);
         gameData.StartStoryTransition();
-        SceneManager.LoadScene("Comic01");
+        goShowStartStory = true;
     }
     #endregion
 
@@ -241,10 +260,22 @@ public class TitleScript : UI_Effect
             titleUIs.SetActive(false);
             mainMenuUIs.SetActive(true);
             ShowAlphaUI(ref mainMenuUIs);
-            continueButton.Select();
+            selectButton = continueButton;
 
             nowActiveScreen = titleAndMenuScreen;
         }
+    }
+
+    /// <summary>
+    /// 使うサウンドを読み込む
+    /// </summary>
+    void SoundSet()
+    {
+        Sound.LoadBGM("TitleSceneBGM", "TitleSceneBGM");
+        Sound.LoadSE("PencilSelect", "ButtonSelect");
+        Sound.LoadSE("PencilPush", "ButtonPush");
+
+        Sound.PlayBGM("TitleSceneBGM", 0.05f);
     }
 
     /// <summary>
@@ -281,8 +312,26 @@ public class TitleScript : UI_Effect
     /// </summary>
     void FadeSelect()
     {
-        if (fadeState == FadeState.Title)
-        {
+        if (fadeState == FadeState.Brack)
+        {   // 初期シーン起動時
+            nowEffecting = true;
+
+            FadeOutUI(ref blackFadePanel, startFadeSec);
+
+            if (blackFadePanel.GetComponent<Image>().color.a == 0f)
+            {
+                fadeState = FadeState.None;
+            }
+
+            if (fadeState == FadeState.None && selectButton != null)
+            {
+                selectButton.Select();
+            }
+        }
+        else if (fadeState == FadeState.Title)
+        {   // もくじ画面遷移時
+            nowEffecting = true;
+
             UIToFade(ref titleUIs, ref mainMenuUIs, ref fadeState, fadeSec);
 
             if (fadeState == FadeState.None)
@@ -291,8 +340,14 @@ public class TitleScript : UI_Effect
             }
         }
         else if (fadeState == FadeState.StageSelect)
-        {
-            nowEffecting = true;
+        {   // もくじ⇒ステージセレクト or ステージセレクト⇒もくじ
+            if (!nowEffecting)
+            {
+                // 必要があれば1ページ目へ戻す（松島）
+                ResetBookScript();
+            }
+
+            nowEffecting = true;            
 
             if (gameData.OutGameState != OutGame.MeinMenu)
             {
@@ -314,7 +369,7 @@ public class TitleScript : UI_Effect
             }
         }
         else if (fadeState == FadeState.HowToPlay)
-        {
+        {   // もくじ⇒あそびかた or あそびかた⇒もくじ
             nowEffecting = true;
 
             if (gameData.OutGameState != OutGame.MeinMenu)
@@ -337,7 +392,7 @@ public class TitleScript : UI_Effect
             }
         }
         else if (fadeState == FadeState.Reset)
-        {
+        {   // もくじ⇒リセット確認画面 or リセット確認画面⇒もくじ
             nowEffecting = true;
 
             if (resetScreenFlag)
@@ -355,9 +410,38 @@ public class TitleScript : UI_Effect
             }
         }
         else
-        {
+        {   // 遷移していない状態
             nowEffecting = false;
         }
+    }
+
+    void GoShowStartStory()
+    {
+        FadeInUI(ref blackFadePanel, fadeSec);
+        Sound.VolumeDownBGM(Time.deltaTime, 0.2f);
+        goTime += Time.deltaTime;
+
+        if (goTime >= fadeSec / 2f)
+        {
+            Sound.BGMAndSEResets();
+            gameData.StartStoryTransition();
+            SceneManager.LoadScene("Comic01");
+        }
+    }
+
+    /// <summary>
+    /// 制作者：松島
+    /// 2ページ目を選択したまま、他のメニュー画面へ遷った場合に、
+    /// 1ページ目へ戻す処理
+    /// </summary>
+    private void ResetBookScript()
+    {
+        if (_BookUI.CurrentPage > 1) return;
+
+        Image image = stageSelectPageScreen[1].GetComponent<Image>();
+        image.color = new Color(image.color.r, image.color.g, image.color.b, 1.0f);
+
+        _BookUI.BackToPrevPage();
     }
 
     /// <summary>
@@ -365,7 +449,7 @@ public class TitleScript : UI_Effect
     /// </summary>
     void StageSelectScreenEffectReset()
     {
-        for(int i = 0; i < stageSelectPage.Length; i++)
+        for (int i = 0; i < stageSelectPage.Length; i++)
         {
             for (int j = 0; j < pageButtonNum[i]; j++)
             {
@@ -392,6 +476,9 @@ public class TitleScript : UI_Effect
                 UIAlphaOnReset(ref stageSelectPage[i].stageSelectScreen, false);
             }
         }
+
+        //// 必要があれば1ページ目へ戻す（松島）
+        //ResetBookScript();
     }
     #endregion
 
@@ -403,6 +490,7 @@ public class TitleScript : UI_Effect
         fadeState = FadeState.Reset;
         resetScreenFlag = true;
         selectButton = noButton;
+        Sound.PlaySE("PencilPush", 1f);
     }
 
     public void ClickContinueButton()
@@ -410,6 +498,7 @@ public class TitleScript : UI_Effect
         fadeState = FadeState.StageSelect;
         selectButton = stage01Button;
         nowActiveScreen = stageSelectScreens;
+        Sound.PlaySE("PencilPush", 1f);
         gameData.StageSelectTransition();
 
         StageButtonActivity();
@@ -420,7 +509,14 @@ public class TitleScript : UI_Effect
         fadeState = FadeState.HowToPlay;
         selectButton = cancelButton;
         nowActiveScreen = howToPlayScreen;
+        Sound.PlaySE("PencilPush", 1f);
         gameData.HowToPlayTransition();
+    }
+
+    public void ClickStoryButton()
+    {
+        goShowStartStory = true;
+        eventSystem.enabled = false;
     }
 
     public void ClickEndGameButton()
@@ -450,7 +546,11 @@ public class TitleScript : UI_Effect
             {
                 if (gameData.stageData[i].selectOK)
                 {
+                    if (ComicCheck(scenename))
+                        return;
+
                     gameData.ChangeCutInTransition();
+                    Sound.BGMAndSEResets();
                     SceneManager.LoadScene(scenename);
                     return;
                 }
@@ -473,6 +573,7 @@ public class TitleScript : UI_Effect
         fadeState = FadeState.Reset;
         resetScreenFlag = false;
         selectButton = continueButton;
+        Sound.PlaySE("PencilPush", 1f);
     }
 
     public void ClickYesButton()
@@ -547,6 +648,18 @@ public class TitleScript : UI_Effect
         nowActiveScreen = titleAndMenuScreen;
         gameData.MeinMenuTransition();
     }
+
+    public void Select()
+    {
+        if (selectButton != null && eventSystem.GetComponent<EventSystem>().currentSelectedGameObject == selectButton.gameObject)
+        {
+            selectButton = null;
+        }
+        else
+        {
+            Sound.PlaySE("PencilSelect", 0.75f);
+        }
+    }
     #endregion
 
 
@@ -555,23 +668,28 @@ public class TitleScript : UI_Effect
     //---------- タイトル画面時の処理 ----------//
     void PressAnyKey()
     {
+        if (nowEffecting)
+            return;
+
         if (gameData.showStartStory[0])
         {
             fadeState = FadeState.Title;
             selectButton = continueButton;
+            Sound.PlaySE("PencilPush", 1f);
             gameData.MeinMenuTransition();
         }
         else
         {
             goNextScene = true;
-            SceneManager.LoadScene("Comic01");
-            gameData.StartStoryTransition();
+            goShowStartStory = true;
         }
     }
 
     //---------- ステージ選択画面時の処理 ----------//
     void GoNextPageStageSelect()
     {
+        _BookUI.GoToNextPage();
+        
         for (int i = 0; i < stageSelectPage.Length - 1; i++)
         {
             if (stageSelectPage[i].stageActive)
@@ -594,13 +712,13 @@ public class TitleScript : UI_Effect
                         stageSelectPage[i + 1].stageButton[j].SetActive(false);
                     }
                 }
-                // 今表示中のUIをすべて非アクティブ化
-                stageSelectPage[i].stageSelectScreen.SetActive(false);
-                stageSelectPage[i].stageActive = false;
-                for (int j = 0; j < stageSelectPage[i].stageButton.Length; j++)
-                {
-                    stageSelectPage[i].stageButton[j].SetActive(false);
-                }
+                //// 今表示中のUIをすべて非アクティブ化
+                //stageSelectPage[i].stageSelectScreen.SetActive(false);
+                //stageSelectPage[i].stageActive = false;
+                //for (int j = 0; j < stageSelectPage[i].stageButton.Length; j++)
+                //{
+                //    stageSelectPage[i].stageButton[j].SetActive(false);
+                //}
                 // ボタンの選択状態を指定
                 stageSelectPage[i + 1].stageButton[0].GetComponent<Button>().Select();
 
@@ -611,6 +729,8 @@ public class TitleScript : UI_Effect
 
     void GoBackPageStageSelect()
     {
+        _BookUI.BackToPrevPage();
+
         for (int i = 1; i < stageSelectPage.Length; i++)
         {
             if (stageSelectPage[i].stageActive)
@@ -629,13 +749,13 @@ public class TitleScript : UI_Effect
                         stageSelectPage[i - 1].stageButton[j].SetActive(false);
                     }
                 }
-                // 今表示中のUIをすべて非アクティブ化
-                stageSelectPage[i].stageSelectScreen.SetActive(false);
-                stageSelectPage[i].stageActive = false;
-                for (int j = 0; j < stageSelectPage[i].stageButton.Length; j++)
-                {
-                    stageSelectPage[i].stageButton[j].SetActive(false);
-                }
+                //// 今表示中のUIをすべて非アクティブ化
+                //stageSelectPage[i].stageSelectScreen.SetActive(false);
+                //stageSelectPage[i].stageActive = false;
+                //for (int j = 0; j < stageSelectPage[i].stageButton.Length; j++)
+                //{
+                //    stageSelectPage[i].stageButton[j].SetActive(false);
+                //}
                 // ボタンの選択状態を指定
                 var buttonNum = stageSelectPage[i - 1].stageButton.Length - 1;
                 stageSelectPage[i - 1].stageButton[buttonNum].GetComponent<Button>().Select();
@@ -694,6 +814,32 @@ public class TitleScript : UI_Effect
             {
                 stageSelectPage[0].stageButton[i].SetActive(false);
             }
+        }
+    }
+
+    bool ComicCheck(string selectStage)
+    {
+        if (selectStage == gameData.stageScene[2] && !gameData.showStartStory[1])
+        {
+            Sound.BGMAndSEResets();
+            SceneManager.LoadScene("Comic02");
+            return true;
+        }
+        else if (selectStage == gameData.stageScene[4] && !gameData.showStartStory[2])
+        {
+            Sound.BGMAndSEResets();
+            SceneManager.LoadScene("Comic03");
+            return true;
+        }
+        else if (selectStage == gameData.stageScene[6] && !gameData.showStartStory[3])
+        {
+            Sound.BGMAndSEResets();
+            SceneManager.LoadScene("Comic04");
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
     #endregion

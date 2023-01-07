@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;  // Cinemachineを追加でusing
+using UnityEngine.SceneManagement;
 
 public class DirectingScript : MonoBehaviour
 {
@@ -14,7 +15,9 @@ public class DirectingScript : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera sectionPointCinemachine;
 
     [Header("演出共通")]
+    [SerializeField] private bool bird = true;
     [SerializeField] private float[] changeBirdPosision; // 最後の数値が鳥の終了値
+    [SerializeField] private float changeCameraSec = 2.0f; // 鳥を飛ばさない場合のカメラ遷移時間
     [SerializeField] private GameObject player;
     [SerializeField] private GameObject afterimage;
     
@@ -23,6 +26,7 @@ public class DirectingScript : MonoBehaviour
     [SerializeField] private GameObject gameStartPoint;
     [SerializeField] private float startRunSec = 3.0f;
     [SerializeField] private float startTurnSec = 1.0f;
+    [SerializeField] private bool startCamSkip;
 
     [Header("ゴール演出")]
     [SerializeField] private GameObject goalArea;
@@ -44,12 +48,15 @@ public class DirectingScript : MonoBehaviour
     MyCinemachineDollyCart myCinemachineDollyCart;
     CharacterController charaCon_p;
     Animator animator_p;
+    string nowStageName;
     float step = -1;
     float goGateTime = 0;
     bool viewing = false;
 
     // スタート演出
     Vector3 startVec;
+    bool cameraCycleOK = false;
+    Stage01LookAtPlayerCameraController LookAtPlayerController;
 
     // ゴール演出
     Vector3 goalHeadingVec;
@@ -58,7 +65,10 @@ public class DirectingScript : MonoBehaviour
     private bool _IsStartWarpEffect = false;
     #endregion
 
+
+    #region Propaty
     public bool IsStartWarpEffect { get { return _IsStartWarpEffect; } }
+    #endregion
 
 
     #region Unity function
@@ -127,21 +137,35 @@ public class DirectingScript : MonoBehaviour
         startVec = gameStartPoint.transform.position - player.transform.position;
         startVec.y = 0f;
         player.transform.rotation = Quaternion.LookRotation(startVec);
-        myCinemachineDollyCart = GameObject.Find("Bird").GetComponent<MyCinemachineDollyCart>();
+        if (bird)
+        {
+            myCinemachineDollyCart = GameObject.Find("Bird").GetComponent<MyCinemachineDollyCart>();
+        }
+
+        // 今のシーンの名前を読み込む
+        nowStageName = SceneManager.GetActiveScene().name;
+        if (nowStageName == "Stage01")
+        {
+            //stage01でプレイヤーを見回すカメラのコントローラースクリプトの取得
+            LookAtPlayerController = startVirtualCinemachine.GetComponent<Stage01LookAtPlayerCameraController>();
+        }
     }
 
     // VCカメラの初期優先順位を設定処理
     void StartVCPrioritySet()
     {
-        for (int i = 0; i < startViewVC.Length; i++)
+        if (!startCamSkip)
         {
-            if (i == 0)
+            for (int i = 0; i < startViewVC.Length; i++)
             {
-                startViewVC[i].Priority = 100;
-            }
-            else
-            {
-                startViewVC[i].Priority = 10;
+                if (i == 0)
+                {
+                    startViewVC[i].Priority = 100;
+                }
+                else
+                {
+                    startViewVC[i].Priority = 10;
+                }
             }
         }
 
@@ -179,23 +203,65 @@ public class DirectingScript : MonoBehaviour
         // カメラ旋回時プレイヤーを非表示
         player.SetActive(false);
         viewing = true;
-        for (int i = 0; i < startViewVC.Length; i++)
+        if (!startCamSkip)
         {
-            yield return new WaitUntil(() => changeBirdPosision[i] <= myCinemachineDollyCart.BirdPosition);
-            startViewVC[i].Priority = 10;
-            if (i < startViewVC.Length - 1)
+            for (int i = 0; i < startViewVC.Length; i++)
             {
-                startViewVC[i + 1].Priority = 100;
+                if (bird)
+                {
+                    yield return new WaitUntil(() => changeBirdPosision[i] <= myCinemachineDollyCart.BirdPosition);
+                }
+                else
+                {
+                    yield return new WaitForSeconds(changeCameraSec);
+                }
+                startViewVC[i].Priority = 10;
+                if (i < startViewVC.Length - 1)
+                {
+                    startViewVC[i + 1].Priority = 100;
+                }
+                else
+                {
+                    startVirtualCinemachine.Priority = 100;
+                }
             }
-            else
-            {
-                startVirtualCinemachine.Priority = 100;
-            }
+        }
+        else
+        {
+            mainVirtualCinemachine.Priority = 50;
         }
         gameData.EntryPlayerTransition();
         // カメラ旋回終了後プレイヤーと残像を表示
         player.SetActive(true);
         afterimage.transform.GetChild(0).transform.GetChild(0).gameObject.SetActive(true);
+
+        //if (bird)
+        //{   // 鳥生存時のカメラ遷移（ステージ１～４）
+        //    // カメラ旋回時プレイヤーを非表示
+        //    player.SetActive(false);
+        //    viewing = true;
+        //    for (int i = 0; i < startViewVC.Length; i++)
+        //    {
+        //        yield return new WaitUntil(() => changeBirdPosision[i] <= myCinemachineDollyCart.BirdPosition);
+        //        startViewVC[i].Priority = 10;
+        //        if (i < startViewVC.Length - 1)
+        //        {
+        //            startViewVC[i + 1].Priority = 100;
+        //        }
+        //        else
+        //        {
+        //            startVirtualCinemachine.Priority = 100;
+        //        }
+        //    }
+        //    gameData.EntryPlayerTransition();
+        //    // カメラ旋回終了後プレイヤーと残像を表示
+        //    player.SetActive(true);
+        //    afterimage.transform.GetChild(0).transform.GetChild(0).gameObject.SetActive(true);
+        //}
+        //else
+        //{
+
+        //}
     }
 
 
@@ -211,10 +277,22 @@ public class DirectingScript : MonoBehaviour
         }
         else if (PlayerTurn(gameStartPoint, startTurnSec))
         {
-            Debug.Log("スタート地点到着");
-            animator_p.SetFloat("DeltaTime", 0.0f);
-            animator_p.SetFloat("MoveBlend", 0.0f);
-            gameData.PlayGameTransition();
+            if (nowStageName == "Stage01" && !cameraCycleOK)
+            {
+                animator_p.SetFloat("DeltaTime", 0.0f);
+                animator_p.SetFloat("MoveBlend", 0.0f);
+
+                LookAtPlayerController.LookAtPlayerCameraStart();
+                if (LookAtPlayerController.EndPathPos())
+                    cameraCycleOK = true;
+            }
+            else
+            {
+                Debug.Log("スタート地点到着");
+                animator_p.SetFloat("DeltaTime", 0.0f);
+                animator_p.SetFloat("MoveBlend", 0.0f);
+                gameData.PlayGameTransition();
+            }
         }
     }
 

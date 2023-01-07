@@ -16,7 +16,7 @@ public enum PlayerState : int
     Idle,
     Move,
     Action,
-    Action_PushOrPll,
+    Action_PushOrPull,
     Ride,
     Hint,
     Dead
@@ -94,6 +94,17 @@ public partial class PlayerBehaviour
     public ActionType ActionType { get { return _ActionType; } }
     #endregion
 
+    #region public function
+    /// <summary>
+    /// アクションのモーションが終了したら、StateAttackからStateIdelへ遷移する。
+    /// アクションのアニメーションの指定したクリップから呼び出す
+    /// </summary>
+    public void OnAttackFinish()
+    {
+        _StateMachine.Dispatch((int)Event.FinishAction);
+    }
+    #endregion
+
     #region private function
     /// <summary>
     /// ステートマシンの設定を行う（Startメソッドで呼び出すよう）
@@ -117,6 +128,10 @@ public partial class PlayerBehaviour
 
         // （Action→Action_PushOrPll）
         _StateMachine.AddTransition<StateAction, StateAction_PushOrPull>((int)Event.StartAction_PushOrPll);
+        // （Move→Action_PushOrPll）
+        _StateMachine.AddTransition<StateMove, StateAction_PushOrPull>((int)Event.StartAction_PushOrPll);
+        // （Idle→Action_PushOrPll）
+        _StateMachine.AddTransition<StateIdle, StateAction_PushOrPull>((int)Event.StartAction_PushOrPll);
         // （Action_PushOrPll→Idle）
         _StateMachine.AddTransition<StateAction_PushOrPull, StateIdle>((int)Event.FinishAction_PushOrPll);
 
@@ -139,6 +154,31 @@ public partial class PlayerBehaviour
         _StateMachine.Start<StateIdle>();
         _State = PlayerState.Idle;
     }
+
+    /// <summary>
+    /// どのアクションに遷移するか決定する
+    /// </summary>
+    void ToAnyAction()
+    {
+        switch (_ActionType)
+        {
+            case ActionType.Default:
+            case ActionType.Button:
+            case ActionType.Torch:
+                {
+                    _StateMachine.Dispatch((int)Event.StartAction);
+                }
+                break;
+            case ActionType.PushOrPull:
+                {
+                    _StateMachine.Dispatch((int)Event.StartAction_PushOrPll);
+                }
+                break;
+            default:
+                Debug.Log("不測の事態 in Actoinステート");
+                break;
+        }
+    }
     #endregion
 
 
@@ -157,6 +197,9 @@ public partial class PlayerBehaviour
         {
             //Debug.Log("Enter " + Name);
             Owner._State = PlayerState.Idle;
+            // Idleステートに入っても、モノを引っ張るアニメーションが再生されている場合は、
+            // 強制的にIdleアニメーションに逃がす。
+            if(Owner._StateInfo.IsName("PushOrPull")) Owner._Animator.SetTrigger("ToIdle");
             Owner._Animator.ResetTrigger("ToMove");
         }
 
@@ -168,19 +211,21 @@ public partial class PlayerBehaviour
                 return;
             }
 
-            if (Input.GetButtonDown("Action"))
+            if (Owner._ActionType != ActionType.Default
+                && Input.GetButtonDown("Action"))
             {
-                StateMachine.Dispatch((int)Event.StartAction);
+                // 何かしらのアクションステートへ遷移
+                Owner.ToAnyAction();
                 return;
             }
 
-            if (!HintGimmick._IsAliveHint) Owner.MovePlayer();
-            Owner._Animator.SetFloat("DeltaTime", Owner._DeltaTime);
+            if (!Owner._HintGimmick.IsAliveHint || Owner._IsInputable) Owner.MovePlayer();
+            if(Owner._IsInputable) Owner._Animator.SetFloat("DeltaTime", Owner._DeltaTime);
 
             // Lスティックが一定時間以上傾けられた場合、Moveステートに移動
             if (Owner._DeltaTime >= 0.1f) StateMachine.Dispatch((int)Event.StartMove);
 
-            if (HintGimmick._IsAliveHint && Input.GetButtonDown("Hint"))
+            if (Owner._HintGimmick.IsAliveHint /*&& Input.GetButtonDown("Hint")*/)
                 StateMachine.Dispatch((int)Event.StartHint);
 
             // メインカメラのフォーカス具合を調整する
@@ -192,6 +237,7 @@ public partial class PlayerBehaviour
         protected override void OnExit(State nextState)
         {
             //Debug.Log("Exit " + Name);
+            Owner._Animator.ResetTrigger("ToIdle");
         }
     }
     #endregion
@@ -211,6 +257,10 @@ public partial class PlayerBehaviour
         {
             //Debug.Log("Enter " + Name);
             Owner._State = PlayerState.Move;
+            // Idleステートに入っても、モノを引っ張るアニメーションが再生されている場合は、
+            // 強制的にIdleアニメーションに逃がす。
+            Owner._Animator.ResetTrigger("ToAction");
+            if (Owner._StateInfo.IsName("PushOrPull")) Owner._Animator.SetTrigger("ToIdle");
             //Owner._animator.ResetTrigger("ToRide");
         }
 
@@ -219,9 +269,11 @@ public partial class PlayerBehaviour
             // 梯子上りモーションに切り替えるかどうか
             JudgeClimbLadder();
 
-            if (Input.GetButtonDown("Action"))
+            if (Owner._ActionType != ActionType.Default
+                && Input.GetButtonDown("Action"))
             {
-                StateMachine.Dispatch((int)Event.StartAction);
+                // 何かしらのアクションステートへ遷移
+                Owner.ToAnyAction();
                 return;
             }
 
@@ -230,7 +282,7 @@ public partial class PlayerBehaviour
 
             if (Owner._DeltaTime < 0.1f) StateMachine.Dispatch((int)Event.StopMove);
 
-            if (HintGimmick._IsAliveHint && Input.GetButtonDown("Hint"))
+            if (Owner._HintGimmick.IsAliveHint/* && Input.GetButtonDown("Hint")*/)
                 StateMachine.Dispatch((int)Event.StartHint);
 
             // メインカメラのフォーカス具合を調整する
@@ -274,39 +326,15 @@ public partial class PlayerBehaviour
 
         protected override void OnEnter(State prevState)
         {
-            action = ActionType.Default;
+            Owner._Animator.SetInteger("ActionType", (int)Owner._ActionType/*action*/);
             Owner._Animator.SetTrigger("ToAction");
-            switch (Owner._ActionType)
-            {
-                case ActionType.Default:
-                    action = ActionType.Default;
-                    break;
-                case ActionType.Button:
-                    action = ActionType.Button;
-                    break;
-                case ActionType.Torch:
-                    action = ActionType.Torch;
-                    break;
-                case ActionType.PushOrPull:
-                    action = ActionType.PushOrPull;
-                    break;
-                default:
-                    action = ActionType.Default;
-                    Debug.Log("不測の事態 in Actoinステート");
-                    break;
-            }
-            Owner._Animator.SetInteger("ActionType", (int)action);
             Owner._State = PlayerState.Action;
+
+            Owner._ActionButton.GetButtonDown();
         }
 
         protected override void OnUpdate()
         {
-            if (action == ActionType.PushOrPull)
-            {
-                StateMachine.Dispatch((int)Event.StartAction_PushOrPll);
-                return;
-            }
-
             if (!Owner._CharaCon.isGrounded)
             {
                 Owner._CharaCon.Move(new Vector3(0, Physics.gravity.y * Time.deltaTime, 0));
@@ -318,15 +346,6 @@ public partial class PlayerBehaviour
             //Debug.Log("Exit " + Name);
             //Owner._actionType = ActionType.Default;
         }
-    }
-
-    /// <summary>
-    /// アクションのモーションが終了したら、StateAttackからStateIdelへ遷移する。
-    /// アクションのアニメーションの指定したクリップから呼び出す
-    /// </summary>
-    public void OnAttackFinish()
-    {
-        _StateMachine.Dispatch((int)Event.FinishAction);
     }
     #endregion
 
@@ -345,7 +364,12 @@ public partial class PlayerBehaviour
 
         protected override void OnEnter(State prevState)
         {
-            Owner._State = PlayerState.Action_PushOrPll;
+            Owner._State = PlayerState.Action_PushOrPull;
+            Owner._Animator.SetInteger("ActionType", (int)Owner._ActionType/*action*/);
+            Owner._Animator.SetTrigger("ToAction");
+
+            time = 0.0f;
+            Owner._ActionButton.GetButtonDown();
         }
 
         protected override void OnUpdate()
@@ -362,7 +386,7 @@ public partial class PlayerBehaviour
             Owner.MovePlayer();
             if (Input.GetButtonUp("Action")
                 || Owner._ActionType != ActionType.PushOrPull
-                || time > 1.0f)
+                /*|| time > 1.0f*/)
             {
                 StateMachine.Dispatch((int)Event.FinishAction_PushOrPll);
             }
@@ -373,6 +397,7 @@ public partial class PlayerBehaviour
         {
             //Debug.Log("Exit " + Name);
             //Owner._actionType = ActionType.Default;
+            Owner._ActionButton.GetButtonUp();
             Owner._Animator.SetTrigger("ToIdle");
         }
     }
@@ -468,7 +493,7 @@ public partial class PlayerBehaviour
 
         protected override void OnUpdate()
         {
-            if (!HintGimmick._IsAliveHint) StateMachine.Dispatch((int)Event.FinishHint);
+            if (!Owner._HintGimmick.IsAliveHint) StateMachine.Dispatch((int)Event.FinishHint);
 
             // メインカメラのフォーカス具合を調整する
             Owner.UpdateLensVerticalFOV();

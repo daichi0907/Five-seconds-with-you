@@ -25,7 +25,7 @@ public partial class GameData : ScriptableObject
 
     #region DATA
     public string[] stageScene = {"Stage01", "Stage02", "Stage03", "Stage04", "Stage05",
-                                  "Stage01", "Stage01", "Stage01"};
+                                  "Stage06", "Stage07", "Stage08"};
     public int notClearStageNum;
     public StageData[] stageData = new StageData[8];
     public bool Editor_StartGame = false;      // ゲームを開始した際に立てるフラグ
@@ -265,12 +265,17 @@ public partial class GameData : ScriptableObject
     // ステージのクリア状態とアイテム取得状態を全てできている状態にアウル
     public void AllClearData()
     {
-        notClearStageNum = 11;
+        notClearStageNum = 8;
 
         for (int i = 0; i < stageData.Length; i++)
         {
             stageData[i].selectOK = true;
             stageData[i].itemGetFlag = true;
+        }
+
+        for(int i = 0; i < showStartStory.Length; i++)
+        {
+            showStartStory[i] = true;
         }
 
         // データの保存

@@ -18,34 +18,34 @@ MonoBehaviour:
   - Stage03
   - Stage04
   - Stage05
-  - Stage01
-  - Stage01
-  - Stage01
-  notClearStageNum: 0
+  - Stage06
+  - Stage07
+  - Stage08
+  notClearStageNum: 8
   stageData:
   - selectOK: 1
-    itemGetFlag: 0
+    itemGetFlag: 1
     sceneName: Stage01
-  - selectOK: 0
-    itemGetFlag: 0
+  - selectOK: 1
+    itemGetFlag: 1
     sceneName: Stage02
-  - selectOK: 0
-    itemGetFlag: 0
+  - selectOK: 1
+    itemGetFlag: 1
     sceneName: Stage03
-  - selectOK: 0
-    itemGetFlag: 0
+  - selectOK: 1
+    itemGetFlag: 1
     sceneName: Stage04
-  - selectOK: 0
-    itemGetFlag: 0
+  - selectOK: 1
+    itemGetFlag: 1
     sceneName: Stage05
-  - selectOK: 0
-    itemGetFlag: 0
-    sceneName: Stage01
-  - selectOK: 0
-    itemGetFlag: 0
-    sceneName: Stage01
-  - selectOK: 0
-    itemGetFlag: 0
-    sceneName: Stage01
+  - selectOK: 1
+    itemGetFlag: 1
+    sceneName: Stage06
+  - selectOK: 1
+    itemGetFlag: 1
+    sceneName: Stage07
+  - selectOK: 1
+    itemGetFlag: 1
+    sceneName: Stage08
   Editor_StartGame: 1
-  showStartStory: 0000000000
+  showStartStory: 0101010101
