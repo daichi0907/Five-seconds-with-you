@@ -5,7 +5,6 @@
   
 〇制作期間  
 2022/04/19～2023/01/05  
-（現在も制作中のため、順次更新予定です。）
 
 〇１週間の平均作業時間  
 ７～１０時間（授業時間〈３時間〉含む）
@@ -28,33 +27,46 @@
 　⇒ゲーム概要などの説明  
   
 - **<ins>実行ファイル</ins>**  
-　⇒ギガファイル便URL：**<ins>[実行ファイルダウンロード](https://67.gigafile.nu/0117-p2451e6efbd3a02657214a9140669b4e0)</ins>**（期間：2023年1月17日(火)まで, ダウンロードキー：無し）    
-  <!--削除キーd021-->
-
-- **<ins>プレイ映像（動画）</ins>**  
-　⇒ギガファイル便URL：**<ins>[プレイ映像ダウンロード](https://53.gigafile.nu/0120-ic9fd860d24f9e610eaf90cf385a7ab14)</ins>**（期間：2023年1月20日(金)まで, ダウンロードキー：無し）  
-  <!--削除キーb6b7-->
+　⇒ダウンロードしていただくと実際にPCで遊んで頂けます。  
+ 　 ギガファイル便URL：**<ins>[実行ファイルダウンロード](https://60.gigafile.nu/0425-k8730fda546d79694742b92b005f27ee2)</ins>**（期間：2023年4月25日(火)まで, ダウンロードキー：無し）  
+  <!--削除キー5d07-->
   
-※「実行ファイル」と「プレイ映像」ですが、  
+- **<ins>PR映像（動画）</ins>**  
+　⇒1分程のPR動画となります。  
+ 　 ギガファイル便URL：**<ins>[PR映像ダウンロード](https://66.gigafile.nu/0425-bbe1df68ab47f81caf6b4fe67451be399)</ins>**（期間：2023年4月25日(火)まで, ダウンロードキー：無し）  
+  <!--削除キー2751-->
+  
+- **<ins>プレイ映像（動画）</ins>**  
+　⇒18分間の全ステージプレイ動画となります。  
+ 　 ギガファイル便URL：**<ins>[プレイ映像ダウンロード](https://78.gigafile.nu/0425-p500ba894ed92d8a043a455464bf2fd66)</ins>**（期間：2023年4月25日(火)まで, ダウンロードキー：無し）  
+　　【注意事項】  
+  　　・18分近くの長尺の動画となります。  
+  　　　プレイ環境が整ってない場合などに飛ばしながら見て頂けると幸いです。  
+  　　・全8ステージの攻略内容かつ、エンディングまで録画された映像となっております。  
+  　　　パズルアクションゲームということもあり大きなネタバレがありますので、  
+  　　　ゲームをプレイ予定の方はゲームを遊んで頂いてから見て頂くことをお勧めします。  
+  <!--削除キー8de2-->
+  
+※「実行ファイル」・「PR映像」・「プレイ映像」ですが、  
 　gitですと容量の関係上アップすることができませんでしたので、  
 　上記のURLからダウンロードをお願いいたします。  
-　（製作途中のため、完成品ができ次第ファイル内容並びにURLが変更する可能性があります。）
+　（閲覧・ダウンロードには期間がございますので、期間更新のためURLを変更させて頂く場合がございます。ご了承ください。）
 
 # どんなゲームか
 　死別した弟を救うため、兄（プレイヤー）は5秒前のプレイヤーの動きと同じ動作をする弟の幽体と協力してステージを攻略していく「アクションパズルゲーム」です。  
 　幽体の弟には物理判定があり、触れることが可能です。そのため、穴の開いた地形に弟を誘導し先へ進むなどといった様々なギミックが出てきます。  
 　ゲームの世界観は「絵本の中」となっており、ゲーム中は飛び出す絵本のような形で表現されております。  
   
-![5びょうごのきみと _タイトル画面](https://user-images.githubusercontent.com/71632844/208284648-4812f8ad-53fb-469f-acc2-a32d9f3ddaf3.gif)  
-⓵ゲーム開始画面（タイトル・もくじ・あそびかた画面）  
+![５びょうごのきみと_タイトル画面](https://user-images.githubusercontent.com/71632844/212537151-e21c7c8c-12ed-4c9f-9c3d-74fc729b5ac2.gif)  
+⓵ゲーム開始画面（タイトル・もくじ・ステージセレクト・あそびかた画面）  
   
-![5びょうごのきみと _スタート演出](https://user-images.githubusercontent.com/71632844/208729680-1ec93349-40c4-488f-a90d-3d6fc37d7143.gif)  
+![５びょうごのきみと_スタート演出](https://user-images.githubusercontent.com/71632844/212537174-7c9b6895-0c7d-439b-9359-8f57cd083a77.gif)  
 ⓶スタート演出  
   
-![5びょうごのきみと プレイ映像](https://user-images.githubusercontent.com/71632844/208729523-629e82aa-fb0f-400e-9983-79928e31f552.gif)  
+![５びょうごのきみと_プレイ映像](https://user-images.githubusercontent.com/71632844/212537240-98e4f934-2d34-4b1a-af7c-71e9c7854ca6.gif)  
 ⓷プレイ映像  
   
-![5びょうごのきみと ゴール演出](https://user-images.githubusercontent.com/71632844/208284774-dda936b9-606c-43e7-8cb8-7341b386f3f9.gif)  
+![５びょうごのきみと_クリア画面](https://user-images.githubusercontent.com/71632844/212537287-77518fa0-fc3c-406e-828d-765c51382410.gif)  
 ⓸ゲームクリア時の映像  
   
 <img src="https://user-images.githubusercontent.com/71632844/208284611-1a0dd3b5-f0d1-4286-b7a0-695758927b4c.png" width="480">
@@ -111,7 +123,7 @@
 | [UserSettings.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Storage/UserSettings.cs) | 更新データの管理、保存先の指定、インターフェースによる保存方法データの管理 | 全記述 |
 | ▼[UIフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Scripts/UI) |  |  |
 | [PauseUIAnimation.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/PauseUIAnimation.cs) | インゲーム中のポーズ画面のアニメーション処理を行う | 全記述 |
-| [StageUIScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/StageUIScript.cs) | インゲーム中のUI全般の処理を行う | ポーズ画面に関する処理全般、クリア演出以外の演出関係の処理、BGM・SE関係の処理全般を記述 |
+| [StageUIScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/StageUIScript.cs) | インゲーム中のUI全般の処理を行う | ポーズ画面に関する処理全般、クリア演出以外の演出関係の処理、BGM・SE関係の処理全般、プレイ開始時特定のステージで画面下部にヒントテキストを表示させる処理を記述 |
 | [TransitionScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/TransitionScript.cs) | トランジション処理を行う処理のテンプレート。<br>（ゲーム内では使用されていない。）| 全記述 |
 | [UI_Effect.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/UI_%20Effect.cs) | タイトル画面並びにインゲーム中のUI演出に関する処理を行っている。 | 全記述 |
 | ▼▼[Resourcesフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Resources) |  |  |
