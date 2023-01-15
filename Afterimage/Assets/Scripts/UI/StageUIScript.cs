@@ -13,6 +13,10 @@ public class StageUIScript : UI_Effect
     [SerializeField] private GameData gameData;
     [Space(3)]
 
+    [SerializeField] private GameObject gimicExplanationImage;
+    [SerializeField] private bool gimicExplanationShow = false;
+    [Space(3)]
+
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private Button pausePlayButton;
     [Space(3)]
@@ -49,6 +53,7 @@ public class StageUIScript : UI_Effect
     bool nowEffecting = false;
 
     float timeLimit;
+    float gimicExplanationShowTime = 0f;
 
     Scene nowStage;
 
@@ -301,6 +306,12 @@ public class StageUIScript : UI_Effect
                     // 制限時間を更新する
                     timeLimit -= Time.deltaTime;
                     timerText.text = "Time:" + (int)timeLimit;
+
+                    // 開始5秒間説明を入れる
+                    if (gimicExplanationShow)
+                    {
+                        GimicExplanationShow();
+                    }
                 }
                 break;
             case InGame.Pause:
@@ -541,6 +552,31 @@ public class StageUIScript : UI_Effect
         else
         {
             nowEffecting = false;
+        }
+    }
+
+    void GimicExplanationShow()
+    {
+        // 処理が終了していたら以下の処理をしない
+        if (!gimicExplanationImage.activeInHierarchy)
+            return;
+
+        var img = gimicExplanationImage.GetComponent<Image>();
+
+        if (gimicExplanationShowTime == 0f && img.color.a < 1f)
+        {
+            FadeInUI(ref gimicExplanationImage, 3f);
+        }
+        else if(gimicExplanationShowTime <= 5f)
+        {   // 表示中
+            gimicExplanationShowTime += Time.deltaTime;
+        }
+        else
+        {
+            FadeOutUI(ref gimicExplanationImage, 3f);
+
+            if (img.color.a == 0f)
+                gimicExplanationImage.SetActive(false);
         }
     }
     #endregion

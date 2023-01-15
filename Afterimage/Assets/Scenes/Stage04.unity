@@ -6491,6 +6491,21 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1394123480015163944, guid: 367937eb12e1bba4083eb0de263ef056,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 1036
+      objectReference: {fileID: 0}
+    - target: {fileID: 1394123480015163944, guid: 367937eb12e1bba4083eb0de263ef056,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 72
+      objectReference: {fileID: 0}
+    - target: {fileID: 1394123480015163944, guid: 367937eb12e1bba4083eb0de263ef056,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -455
+      objectReference: {fileID: 0}
     - target: {fileID: 1796029896683573166, guid: 367937eb12e1bba4083eb0de263ef056,
         type: 3}
       propertyPath: m_AnchorMax.y
@@ -6572,6 +6587,11 @@ PrefabInstance:
         type: 3}
       propertyPath: clearStayTime
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2783677082340793480, guid: 367937eb12e1bba4083eb0de263ef056,
+        type: 3}
+      propertyPath: gimicExplanationShow
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2783677082340793481, guid: 367937eb12e1bba4083eb0de263ef056,
         type: 3}
@@ -6731,6 +6751,17 @@ PrefabInstance:
     - target: {fileID: 3918874362776647982, guid: 367937eb12e1bba4083eb0de263ef056,
         type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4712418412937122050, guid: 367937eb12e1bba4083eb0de263ef056,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 1aa907b261c0fd7468be633a06c3b162,
+        type: 3}
+    - target: {fileID: 4712418412937122050, guid: 367937eb12e1bba4083eb0de263ef056,
+        type: 3}
+      propertyPath: m_Color.a
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5238630235567052841, guid: 367937eb12e1bba4083eb0de263ef056,
