@@ -101,16 +101,19 @@
 | [GameData.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/GameData.cs) | ゲームデータの管理並びにセーブデータのセーブ・ロード処理を行う。 | 全記述 |
 | [Game_State.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/Game_State.cs) | ゲームの状態管理並びに状態の取得・変更処理を行う。 | 全記述 |
 | [GetPlayerTriggerScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/GetPlayerTriggerScript.cs) | インゲーム中の演出に必要なTrigger情報を取得しDirectingScriptに情報を返す処理を行う。 | 全記述 |
-| [StartStoryScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/StartStoryScript.cs) | ゲーム開始時のストーリー演出に関する処理の仮組（ファイナル版では未使用の予定）。 | 全記述 |
+| [StageController.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/StageController.cs) | インゲーム開始時に必要な初期化処理全般を行う | BGMをロード・再生する処理のみ記述 |
+| [StartStoryScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/StartStoryScript.cs) | ゲーム開始時のストーリー演出に関する処理の仮組（ファイナル版では未使用）。 | 全記述 |
 | [TitleScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Controller/TitleScript.cs) | タイトルシーン時のボタン処理並びに演出、パネル切り替え処理全般を行う。 | 全記述 |
-| ▼[Storageフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Scripts/Storage) |  |  |
+| ▼[Soundフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Scripts/Storage) |  |  |
+| [Sound.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Sound/Sound.cs) | シングルトンパターンを用いて2Dサウンド（立体的な音響ではない音）を一括管理している | 「IsPlayingSEメソッド」、「_IsPlayingSEメソッド」以外全記述 |
+| ▼[Storageフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Scripts/Sound) |  |  |
 | [StorageManager.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Storage/StorageManager.cs) | ローカルストレージへのデータ保存処理、読込処理などを行っている。 | 全記述 |
 | [UserSettings.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/Storage/UserSettings.cs) | 更新データの管理、保存先の指定、インターフェースによる保存方法データの管理 | 全記述 |
 | ▼[UIフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Scripts/UI) |  |  |
 | [PauseUIAnimation.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/PauseUIAnimation.cs) | インゲーム中のポーズ画面のアニメーション処理を行う | 全記述 |
-| [StageUIScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/StageUIScript.cs) | インゲーム中のUI全般の処理を行う | ポーズ画面に関する処理全般 |
+| [StageUIScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/StageUIScript.cs) | インゲーム中のUI全般の処理を行う | ポーズ画面に関する処理全般、クリア演出以外の演出関係の処理、BGM・SE関係の処理全般を記述 |
 | [TransitionScript.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/TransitionScript.cs) | トランジション処理を行う処理のテンプレート。<br>（ゲーム内では使用されていない。）| 全記述 |
-| [UI_Effect.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/UI_%20Effect.cs) | タイトル画面並びにインゲーム中のUI演出処理に関する処理を行っている。 | 全記述 |
+| [UI_Effect.cs](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Scripts/UI/UI_%20Effect.cs) | タイトル画面並びにインゲーム中のUI演出に関する処理を行っている。 | 全記述 |
 | ▼▼[Resourcesフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Resources) |  |  |
 | ▼[Transitionフォルダ](https://github.com/daichi0907/Five-seconds-with-you/tree/main/Afterimage/Assets/Resources/Transition) |  |  |
 | [TransitionColorShader.shader](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Resources/Transition/TransitionColorShader.shader) | トランジションイメージ画像にこのシェーダーを付けることで、指定した色のトランジション処理を行う。<br>（ゲーム内では使用されていない。） | 全記述 |
