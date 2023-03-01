@@ -18,7 +18,6 @@
   
 (下記に担当箇所の記載あり)  
 
-
 # ファイルの説明
 - **<ins>Afterimageフォルダ</ins>**  
 　⇒本ゲームのプロジェクトフォルダ  
@@ -132,8 +131,15 @@
 | [TransitionTextureShader.shader](https://github.com/daichi0907/Five-seconds-with-you/blob/main/Afterimage/Assets/Resources/Transition/TransitionTextureShader.shader) | トランジションイメージ画像にこのシェーダーを付け、指定のテクスチャーを設定することで、そのテクスチャー画像のトランジション処理を行う。 | 全記述 |
 
 ※上記に記載のないスクリプトファイルは私自身記述した部分のないスクリプトファイルとなっております。  
-  
+
+
 # 使用したデバイス・ツール
 ・Unity 2021.3.0f1   
 ・VisualStudio2019  
 ・Xbox コントローラー  
+
+
+# 受賞歴
+福岡ゲームコンテストに応募し、優秀賞以上の賞を受賞することが出来ました。  
+（大賞は3月11日に発表のため、賞が決まり次第更新いたします。）  
+URL：[第16回 福岡ゲームコンテスト 2023](https://fukuoka-gffaward2023.com/)  
